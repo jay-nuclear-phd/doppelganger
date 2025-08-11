@@ -141,8 +141,8 @@ class LeftPanel(QWidget):
         red_frame = QFrame()
         red_frame.setStyleSheet("background-color: red;")
         red_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        background_layout.addWidget(blue_frame, stretch=10)
-        background_layout.addWidget(red_frame, stretch=10)
+        background_layout.addWidget(blue_frame, stretch=11)
+        background_layout.addWidget(red_frame, stretch=9)
         background_layout.setSpacing(0)
 
         self.rod_overlay = ControlRodOverlay(self.sim.rod_names, self.sim.max_position)
