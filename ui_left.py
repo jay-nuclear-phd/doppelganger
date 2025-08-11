@@ -153,6 +153,7 @@ class LeftPanel(QWidget):
         super().__init__(parent)
         self.sim = sim
         self.mode_button_style = mode_button_style
+        self.control_buttons = {} # To store references to control buttons
 
         self.media_label = QLabel()
         self.media_label.setAlignment(Qt.AlignCenter)
@@ -228,6 +229,8 @@ class LeftPanel(QWidget):
             down_btn.released.connect(partial(self.set_button_state, name+"_down", False))
             control_grid.addWidget(up_btn, 2, i)
             control_grid.addWidget(down_btn, 3, i)
+            self.control_buttons[key_map_up[name]] = up_btn
+            self.control_buttons[key_map_down[name]] = down_btn
 
         left_layout = QVBoxLayout()
         left_layout.addWidget(self.media_label, 4)

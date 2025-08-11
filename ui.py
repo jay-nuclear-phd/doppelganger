@@ -74,6 +74,10 @@ class ReactorSimulatorWindow(QWidget):
             background-color: #BF5700; /* Background when checked */
             color: white; /* Text color when checked */
         }
+        QPushButton:pressed {
+            background-color: #808080; /* Darker gray when pressed */
+            border-style: inset; /* Visual effect for pressed */
+        }
         """
 
         self.top_panel = TopPanel(self.sim, self.default_style, self.mode_button_style)
@@ -100,11 +104,21 @@ class ReactorSimulatorWindow(QWidget):
             # Update rod overlay in LeftPanel
             self.left_panel.rod_overlay.set_position(rod, 960 - self.sim.rod_positions[rod])
 
+            # Programmatically press the button for visual feedback
+            key_char = chr(event.key()).lower()
+            if key_char in self.left_panel.control_buttons:
+                self.left_panel.control_buttons[key_char].setDown(True)
+
 
     def keyReleaseEvent(self, event):
         if event.key() in self.rod_keymap:
             rod, direction = self.rod_keymap[event.key()]
             self.sim.pressed_state[rod + direction] = False
+
+            # Programmatically release the button for visual feedback
+            key_char = chr(event.key()).lower()
+            if key_char in self.left_panel.control_buttons:
+                self.left_panel.control_buttons[key_char].setDown(False)
 
     def update_gui(self):
         self.sim.update_simulation(0.1)
