@@ -205,7 +205,6 @@ class LeftPanel(QWidget):
         for i, text in enumerate(air_magnet_texts):
             btn = QPushButton(text)
             btn.setStyleSheet(self.mode_button_style)
-            btn.setCheckable(True) # Make them checkable for consistent styling
             btn.setMinimumSize(120, 50) # Keep size
             # No connect for now
             control_grid.addWidget(btn, 1, i)
@@ -216,8 +215,6 @@ class LeftPanel(QWidget):
             down_btn = QPushButton(f"▼ ({key_map_down[name]})")
             up_btn.setStyleSheet(self.mode_button_style)
             down_btn.setStyleSheet(self.mode_button_style)
-            up_btn.setCheckable(True) # Make them checkable for consistent styling
-            down_btn.setCheckable(True) # Make them checkable for consistent styling
             up_btn.setMinimumSize(120, 50)
             down_btn.setMinimumSize(120, 50)
             up_btn.setAutoRepeat(True)
