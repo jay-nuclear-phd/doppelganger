@@ -58,6 +58,32 @@ class TopPanel(QWidget):
         mode_grid.addWidget(self.auto_button, 0, 1)
         mode_grid.addWidget(self.pulse_button, 1, 0)
         mode_grid.addWidget(self.square_button, 1, 1)
+
+        self.source_out_button = QPushButton("OUT")
+        self.source_in_button = QPushButton("IN")
+        
+        self.source_out_button.setMinimumSize(70, 50)
+        self.source_in_button.setMinimumSize(70, 50)
+        
+        self.source_out_button.clicked.connect(self.select_manual)
+        self.source_out_button.setStyleSheet(self.mode_button_style)
+        
+        self.source_in_button.clicked.connect(self.select_auto)
+        self.source_in_button.setStyleSheet(self.mode_button_style)
+                
+        self.mode_button_group = QButtonGroup(self)
+        self.mode_button_group.setExclusive(True)
+
+        self.source_out_button.setCheckable(True)
+        self.source_in_button.setCheckable(True)
+
+        self.mode_button_group.addButton(self.source_out_button)
+        self.mode_button_group.addButton(self.source_in_button)
+        self.source_out_button.setChecked(True)
+
+        source_grid = QGridLayout()
+        source_grid.addWidget(self.source_out_button, 0, 0)
+        source_grid.addWidget(self.source_in_button, 1, 0)
         
         self.start_button = QPushButton("Start")
         self.hold_button = QPushButton("Hold")
@@ -85,8 +111,8 @@ class TopPanel(QWidget):
         self.sim_control_button_group.addButton(self.hold_button)
         self.hold_button.setChecked(True)
 
-        self.reset_button.setStyleSheet("font-size: 18px; font-weight: bold;")
-        self.save_button.setStyleSheet("font-size: 18px; font-weight: bold;")
+        self.reset_button.setStyleSheet(self.default_style)
+        self.save_button.setStyleSheet(self.default_style)
         
         button_grid = QGridLayout()
         button_grid.addWidget(self.start_button, 0, 0)
@@ -98,6 +124,10 @@ class TopPanel(QWidget):
         self.scram_button.setStyleSheet("background-color: red; color: white; font-weight: bold; font-size: 40px;")
         self.scram_button.setMinimumSize(300, 100)
         self.scram_button.clicked.connect(self.activate_scram)
+
+        source_group = QGroupBox("Source")
+        source_group.setStyleSheet("font-size: 16px; font-weight: bold;")
+        source_group.setLayout(source_grid)
 
         mode_group = QGroupBox("Mode Selection")
         mode_group.setStyleSheet("font-size: 16px; font-weight: bold;")
@@ -111,6 +141,7 @@ class TopPanel(QWidget):
         top_button_layout.addWidget(self.title)
         top_button_layout.addStretch()
         
+        top_button_layout.addWidget(source_group)
         top_button_layout.addWidget(mode_group)
         top_button_layout.addWidget(button_group)
         top_button_layout.addWidget(self.scram_button)
