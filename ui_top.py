@@ -59,6 +59,33 @@ class TopPanel(QWidget):
         mode_grid.addWidget(self.pulse_button, 1, 0)
         mode_grid.addWidget(self.square_button, 1, 1)
 
+        self.pump_on_button = QPushButton("ON")
+        self.pump_off_button = QPushButton("OFF")
+
+        self.pump_on_button.setMinimumSize(70, 50)
+        self.pump_off_button.setMinimumSize(70, 50)
+
+        # Connect to dummy functions for now, replace with actual logic later
+        self.pump_on_button.clicked.connect(self.select_manual) # Placeholder
+        self.pump_off_button.clicked.connect(self.select_auto) # Placeholder
+
+        self.pump_on_button.setStyleSheet(self.mode_button_style)
+        self.pump_off_button.setStyleSheet(self.mode_button_style)
+
+        self.pump_button_group = QButtonGroup(self)
+        self.pump_button_group.setExclusive(True)
+
+        self.pump_on_button.setCheckable(True)
+        self.pump_off_button.setCheckable(True)
+
+        self.pump_button_group.addButton(self.pump_on_button)
+        self.pump_button_group.addButton(self.pump_off_button)
+        self.pump_on_button.setChecked(True) # Default to ON
+
+        pump_grid = QGridLayout()
+        pump_grid.addWidget(self.pump_on_button, 0, 0)
+        pump_grid.addWidget(self.pump_off_button, 1, 0)
+
         self.source_out_button = QPushButton("OUT")
         self.source_in_button = QPushButton("IN")
         
@@ -71,7 +98,7 @@ class TopPanel(QWidget):
         self.source_in_button.clicked.connect(self.select_auto)
         self.source_in_button.setStyleSheet(self.mode_button_style)
                 
-        self.mode_button_group = QButtonGroup(self)
+        self.mode_button_group = QButtonGroup(self) # This QButtonGroup name is reused, consider renaming for clarity if it causes issues
         self.mode_button_group.setExclusive(True)
 
         self.source_out_button.setCheckable(True)
@@ -129,6 +156,10 @@ class TopPanel(QWidget):
         source_group.setStyleSheet("font-size: 16px; font-weight: bold;")
         source_group.setLayout(source_grid)
 
+        pump_group = QGroupBox("Pump")
+        pump_group.setStyleSheet("font-size: 16px; font-weight: bold;")
+        pump_group.setLayout(pump_grid)
+
         mode_group = QGroupBox("Mode Selection")
         mode_group.setStyleSheet("font-size: 16px; font-weight: bold;")
         mode_group.setLayout(mode_grid)
@@ -141,6 +172,7 @@ class TopPanel(QWidget):
         top_button_layout.addWidget(self.title)
         top_button_layout.addStretch()
         
+        top_button_layout.addWidget(pump_group)
         top_button_layout.addWidget(source_group)
         top_button_layout.addWidget(mode_group)
         top_button_layout.addWidget(button_group)
