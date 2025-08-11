@@ -110,7 +110,7 @@ class TopPanel(QWidget):
         self.demand_unit_combo = QComboBox()
         self.demand_unit_combo.addItems(["W", "kW", "MW"])
         self.demand_unit_combo.setStyleSheet("background-color: white;" + self.default_style) # Set background to white
-        self.demand_unit_combo.setFixedSize(50, 50)
+        self.demand_unit_combo.setFixedSize(70, 50)
 
         self.demand_apply_button = QPushButton("Apply")
         self.demand_apply_button.setStyleSheet(self.default_style)
@@ -226,6 +226,7 @@ class TopPanel(QWidget):
         demand_group = QGroupBox("Demand")
         demand_group.setStyleSheet("font-size: 16px; font-weight: bold;")
         demand_group.setLayout(demand_grid)
+        demand_group.setMaximumWidth(150)
 
         speed_group = QGroupBox("Speed")
         speed_group.setStyleSheet("font-size: 16px; font-weight: bold;")

@@ -85,7 +85,7 @@ class RightPanel(QWidget):
         status_layout = QVBoxLayout()
         self.status_table = QTableWidget(9, 4)
         self.status_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.status_table.setStyleSheet("font-size: 14px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
+        self.status_table.setStyleSheet("font-size: 18px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
         self.status_table.setShowGrid(False) # Ensure grid is not shown
         self.status_table.horizontalHeader().setVisible(False) # Hide horizontal header
         self.status_table.verticalHeader().setVisible(False) # Hide vertical header
