@@ -41,7 +41,7 @@ class ReactorSimulatorWindow(QWidget):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_gui)
-        self.timer.start50)
+        self.timer.start(50)
 
     def init_ui(self):
         # Define common styles here, or pass them to sub-panels

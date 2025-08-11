@@ -14,6 +14,10 @@ class TopPanel(QWidget):
         self.default_style = default_style
         self.mode_button_style = mode_button_style
 
+        self.applied_speed_value = 1.0 # Initial value
+        self.applied_demand_value = 0.0 # Initial value
+        self.applied_demand_unit = "W" # Initial value
+
         self.title = QLabel("TRIGA Doppelganger")
         self.title.setStyleSheet("font-size: 40px; font-weight: bold;")
         
@@ -283,17 +287,22 @@ class TopPanel(QWidget):
         self.sim.scram_active = True
 
     def apply_demand(self):
-        # Placeholder for demand application logic
-        print("Demand Apply button clicked!")
-        value = self.demand_input.text()
-        unit = self.demand_unit_combo.currentText()
-        print(f"Demand Value: {value}, Unit: {unit}")
+        try:
+            value = float(self.demand_input.text())
+            unit = self.demand_unit_combo.currentText()
+            self.applied_demand_value = value
+            self.applied_demand_unit = unit
+            print(f"Demand applied: {self.applied_demand_value} {self.applied_demand_unit}")
+        except ValueError:
+            print("Invalid demand value entered.")
 
     def apply_speed(self):
-        # Placeholder for speed application logic
-        print("Speed Apply button clicked!")
-        value = self.speed_input.text()
-        print(f"Speed Value: {value}")
+        try:
+            value = float(self.speed_input.text())
+            self.applied_speed_value = value
+            print(f"Speed applied: {self.applied_speed_value}")
+        except ValueError:
+            print("Invalid speed value entered.")
 
     def turn_light_on(self):
         print("Light ON button clicked!")
@@ -302,19 +311,13 @@ class TopPanel(QWidget):
         print("Light OFF button clicked!")
 
     def get_demand_value(self):
-        try:
-            return float(self.demand_input.text())
-        except ValueError:
-            return 0.0 # Return a default or handle error
+        return self.applied_demand_value
 
     def get_demand_unit(self):
-        return self.demand_unit_combo.currentText()
+        return self.applied_demand_unit
 
     def get_speed_value(self):
-        try:
-            return float(self.speed_input.text())
-        except ValueError:
-            return 1.0 # Default value or error handling
+        return self.applied_speed_value
 
     def get_pump_state(self):
         if self.pump_on_button.isChecked():
