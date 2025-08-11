@@ -87,8 +87,17 @@ class ControlRodOverlay(QWidget):
             painter.drawRect(x, y, bar_width, h)
 
             green_y = y + h
+            
+            yellow_height = int(0.1 * half_height)
+            green_remaining_height = half_height - yellow_height
+
+            # Draw the yellow part
+            painter.setBrush(QColor("yellow"))
+            painter.drawRect(x, green_y, bar_width, yellow_height)
+
+            # Draw the remaining green part
             painter.setBrush(QColor("green"))
-            painter.drawRect(x, green_y, bar_width, half_height)
+            painter.drawRect(x, green_y + yellow_height, bar_width, green_remaining_height)
 
 class OverlayContainer(QWidget):
     def __init__(self, background_widget, overlay_widget, parent=None):
@@ -132,8 +141,8 @@ class LeftPanel(QWidget):
         red_frame = QFrame()
         red_frame.setStyleSheet("background-color: red;")
         red_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        background_layout.addWidget(blue_frame, stretch=11)
-        background_layout.addWidget(red_frame, stretch=9)
+        background_layout.addWidget(blue_frame, stretch=10)
+        background_layout.addWidget(red_frame, stretch=10)
         background_layout.setSpacing(0)
 
         self.rod_overlay = ControlRodOverlay(self.sim.rod_names, self.sim.max_position)
