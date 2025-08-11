@@ -2,10 +2,9 @@ from PyQt5.QtWidgets import (
     QWidget, QPushButton, QLabel, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout, QFileDialog, QHeaderView, QButtonGroup, QGroupBox
 )
-from PyQt5.QtCore import Qt, pyqtSignal # Import pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 
 class TopPanel(QWidget):
-    # Define signals
     save_data_signal = pyqtSignal()
     reset_simulation_signal = pyqtSignal()
 
@@ -20,12 +19,12 @@ class TopPanel(QWidget):
         
         self.manual_button = QPushButton("Manual")
         self.auto_button = QPushButton("Auto")
-        self.powercal_button = QPushButton("Square")
+        self.square_button = QPushButton("Square")
         self.pulse_button = QPushButton("Pulse")
         
         self.manual_button.setMinimumSize(100, 50)
         self.auto_button.setMinimumSize(100, 50)
-        self.powercal_button.setMinimumSize(100, 50)
+        self.square_button.setMinimumSize(100, 50)
         self.pulse_button.setMinimumSize(100, 50)
         
         self.manual_button.clicked.connect(self.select_manual)
@@ -33,21 +32,24 @@ class TopPanel(QWidget):
         
         self.auto_button.clicked.connect(self.select_auto)
         self.auto_button.setStyleSheet(self.mode_button_style)
-        self.powercal_button.setStyleSheet(self.mode_button_style)
-        self.powercal_button.clicked.connect(self.toggle_powercal)
-        
-        self.pulse_button.setStyleSheet(self.mode_button_style)
 
+        self.pulse_button.clicked.connect(self.select_pulse)
+        self.pulse_button.setStyleSheet(self.mode_button_style)
+        
+        self.square_button.clicked.connect(self.select_square)
+        self.square_button.setStyleSheet(self.mode_button_style)
+                
         self.mode_button_group = QButtonGroup(self)
         self.mode_button_group.setExclusive(True)
 
         self.manual_button.setCheckable(True)
         self.auto_button.setCheckable(True)
         self.pulse_button.setCheckable(True)
+        self.square_button.setCheckable(True)
 
         self.mode_button_group.addButton(self.manual_button)
         self.mode_button_group.addButton(self.auto_button)
-        self.mode_button_group.addButton(self.powercal_button)
+        self.mode_button_group.addButton(self.square_button)
         self.mode_button_group.addButton(self.pulse_button)
         self.manual_button.setChecked(True)
 
@@ -55,7 +57,7 @@ class TopPanel(QWidget):
         mode_grid.addWidget(self.manual_button, 0, 0)
         mode_grid.addWidget(self.auto_button, 0, 1)
         mode_grid.addWidget(self.pulse_button, 1, 0)
-        mode_grid.addWidget(self.powercal_button, 1, 1)
+        mode_grid.addWidget(self.square_button, 1, 1)
         
         self.start_button = QPushButton("Start")
         self.hold_button = QPushButton("Hold")
@@ -120,6 +122,12 @@ class TopPanel(QWidget):
 
     def select_auto(self):
         self.sim.mode_selected = "Auto"
+    
+    def select_pulse(self):
+        self.sim.mode_selected = "Pulse"
+    
+    def select_square(self):
+        self.sim.mode_selected = "Square"
 
     def start_simulation(self):
         self.sim.running = True
@@ -129,10 +137,3 @@ class TopPanel(QWidget):
 
     def activate_scram(self):
         self.sim.scram_active = True
-
-    def toggle_powercal(self):
-        for button in self.mode_button_group.buttons():
-            if button is self.powercal_button:
-                button.setChecked(True)
-            else:
-                button.setChecked(False)
