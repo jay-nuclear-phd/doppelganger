@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QLabel, QTableWidget, QTableWidgetItem,
-    QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout, QFileDialog, QHeaderView, QButtonGroup, QGroupBox
+    QVBoxLayout, QHBoxLayout, QGridLayout, QStackedLayout, QFileDialog, QHeaderView, QButtonGroup, QGroupBox, QLineEdit, QComboBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 
@@ -58,6 +58,69 @@ class TopPanel(QWidget):
         mode_grid.addWidget(self.auto_button, 0, 1)
         mode_grid.addWidget(self.pulse_button, 1, 0)
         mode_grid.addWidget(self.square_button, 1, 1)
+
+        # Light Group
+        self.light_on_button = QPushButton("ON")
+        self.light_off_button = QPushButton("OFF")
+
+        self.light_on_button.setMinimumSize(70, 50)
+        self.light_off_button.setMinimumSize(70, 50)
+
+        self.light_on_button.clicked.connect(self.select_manual) # Placeholder
+        self.light_off_button.clicked.connect(self.select_auto) # Placeholder
+
+        self.light_on_button.setStyleSheet(self.mode_button_style)
+        self.light_off_button.setStyleSheet(self.mode_button_style)
+
+        self.light_button_group = QButtonGroup(self)
+        self.light_button_group.setExclusive(True)
+
+        self.light_on_button.setCheckable(True)
+        self.light_off_button.setCheckable(True)
+
+        self.light_button_group.addButton(self.light_on_button)
+        self.light_button_group.addButton(self.light_off_button)
+        self.light_on_button.setChecked(True) # Default to ON
+
+        light_grid = QGridLayout()
+        light_grid.addWidget(self.light_on_button, 0, 0)
+        light_grid.addWidget(self.light_off_button, 1, 0)
+
+        # Speed Group
+        self.speed_input = QLineEdit()
+        self.speed_input.setText("1.0") # Default value
+        self.speed_input.setStyleSheet("background-color: white;" + self.default_style)
+        self.speed_input.setFixedSize(80, 50) # Fixed width 80, height 50
+
+        self.speed_apply_button = QPushButton("Apply")
+        self.speed_apply_button.setStyleSheet(self.default_style)
+        self.speed_apply_button.setFixedSize(80, 50) # Fixed height
+        self.speed_apply_button.clicked.connect(self.apply_speed) # Connect to a new method
+
+        speed_layout = QVBoxLayout()
+        speed_layout.addWidget(self.speed_input)
+        speed_layout.addWidget(self.speed_apply_button)
+
+        # Demand Group
+        self.demand_input = QLineEdit()
+        self.demand_input.setText("0") # Set default value to 0
+        self.demand_input.setStyleSheet("background-color: white;" + self.default_style) # Set background to white
+        self.demand_input.setFixedSize(50, 50)
+
+        self.demand_unit_combo = QComboBox()
+        self.demand_unit_combo.addItems(["W", "kW", "MW"])
+        self.demand_unit_combo.setStyleSheet("background-color: white;" + self.default_style) # Set background to white
+        self.demand_unit_combo.setFixedSize(50, 50)
+
+        self.demand_apply_button = QPushButton("Apply")
+        self.demand_apply_button.setStyleSheet(self.default_style)
+        self.demand_apply_button.setFixedHeight(50) # Fixed height at 50
+        self.demand_apply_button.clicked.connect(self.apply_demand) # Connect to a new method
+
+        demand_grid = QGridLayout()
+        demand_grid.addWidget(self.demand_input, 0, 0)
+        demand_grid.addWidget(self.demand_unit_combo, 0, 1)
+        demand_grid.addWidget(self.demand_apply_button, 1, 0, 1, 2) # Span two columns
 
         self.pump_on_button = QPushButton("ON")
         self.pump_off_button = QPushButton("OFF")
@@ -148,8 +211,8 @@ class TopPanel(QWidget):
         button_grid.addWidget(self.save_button, 1, 1)
 
         self.scram_button = QPushButton("SCRAM")
-        self.scram_button.setStyleSheet("background-color: red; color: white; font-weight: bold; font-size: 40px;")
-        self.scram_button.setMinimumSize(300, 100)
+        self.scram_button.setStyleSheet("background-color: red; color: white; font-weight: bold; font-size: 40px; border-radius: 15px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);")
+        self.scram_button.setMinimumSize(200, 120)
         self.scram_button.clicked.connect(self.activate_scram)
 
         source_group = QGroupBox("Source")
@@ -159,6 +222,20 @@ class TopPanel(QWidget):
         pump_group = QGroupBox("Pump")
         pump_group.setStyleSheet("font-size: 16px; font-weight: bold;")
         pump_group.setLayout(pump_grid)
+
+        demand_group = QGroupBox("Demand")
+        demand_group.setStyleSheet("font-size: 16px; font-weight: bold;")
+        demand_group.setLayout(demand_grid)
+
+        speed_group = QGroupBox("Speed")
+        speed_group.setStyleSheet("font-size: 16px; font-weight: bold;")
+        speed_group.setLayout(speed_layout)
+        speed_group.setMaximumWidth(100) # Limit width to prevent extra space
+
+        light_group = QGroupBox("Light")
+        light_group.setStyleSheet("font-size: 16px; font-weight: bold;")
+        light_group.setLayout(light_grid)
+        light_group.setMaximumWidth(100) # Limit width to prevent extra space
 
         mode_group = QGroupBox("Mode Selection")
         mode_group.setStyleSheet("font-size: 16px; font-weight: bold;")
@@ -172,6 +249,9 @@ class TopPanel(QWidget):
         top_button_layout.addWidget(self.title)
         top_button_layout.addStretch()
         
+        top_button_layout.addWidget(light_group)
+        top_button_layout.addWidget(speed_group)
+        top_button_layout.addWidget(demand_group)
         top_button_layout.addWidget(pump_group)
         top_button_layout.addWidget(source_group)
         top_button_layout.addWidget(mode_group)
@@ -200,3 +280,22 @@ class TopPanel(QWidget):
 
     def activate_scram(self):
         self.sim.scram_active = True
+
+    def apply_demand(self):
+        # Placeholder for demand application logic
+        print("Demand Apply button clicked!")
+        value = self.demand_input.text()
+        unit = self.demand_unit_combo.currentText()
+        print(f"Demand Value: {value}, Unit: {unit}")
+
+    def apply_speed(self):
+        # Placeholder for speed application logic
+        print("Speed Apply button clicked!")
+        value = self.speed_input.text()
+        print(f"Speed Value: {value}")
+
+    def turn_light_on(self):
+        print("Light ON button clicked!")
+
+    def turn_light_off(self):
+        print("Light OFF button clicked!")
