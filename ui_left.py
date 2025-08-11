@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QGridLayout, QPushButton, QFrame, QSizePolicy, QLayout
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QPainter, QColor
+from PyQt5.QtGui import QPixmap, QPainter, QColor, QLinearGradient
 from functools import partial
 from simulation import ReactorSimulator # Assuming ReactorSimulator is needed here
 
@@ -96,7 +96,12 @@ class ControlRodOverlay(QWidget):
             # Gray bar starts from the very top
             gray_bar_y = 0
 
-            painter.setBrush(QColor("gray"))
+            # Create gray gradient
+            gray_gradient = QLinearGradient(x, gray_bar_y, x + bar_width, gray_bar_y) # Horizontal gradient
+            gray_gradient.setColorAt(0, QColor(100, 100, 100)) # Darker at left
+            gray_gradient.setColorAt(0.5, QColor(200, 200, 200)) # Lighter in middle
+            gray_gradient.setColorAt(1, QColor(100, 100, 100)) # Darker at right
+            painter.setBrush(gray_gradient)
             painter.setPen(Qt.NoPen)
             painter.drawRect(x, gray_bar_y, bar_width, gray_bar_height)
 
@@ -106,12 +111,20 @@ class ControlRodOverlay(QWidget):
             # Green bar starts immediately after the yellow bar
             green_bar_y = yellow_bar_y + yellow_height
 
-            # Draw the yellow part
-            painter.setBrush(QColor("yellow"))
+            # Create yellow gradient
+            yellow_gradient = QLinearGradient(x, yellow_bar_y, x + bar_width, yellow_bar_y) # Horizontal gradient
+            yellow_gradient.setColorAt(0, QColor(150, 150, 0)) # Darker at left
+            yellow_gradient.setColorAt(0.5, QColor(255, 255, 200)) # Lighter in middle
+            yellow_gradient.setColorAt(1, QColor(150, 150, 0)) # Darker at right
+            painter.setBrush(yellow_gradient)
             painter.drawRect(x, yellow_bar_y, bar_width, yellow_height)
 
-            # Draw the green part
-            painter.setBrush(QColor("green"))
+            # Create green gradient
+            green_gradient = QLinearGradient(x, green_bar_y, x + bar_width, green_bar_y) # Horizontal gradient
+            green_gradient.setColorAt(0, QColor(0, 100, 0)) # Darker at left
+            green_gradient.setColorAt(0.5, QColor(150, 255, 150)) # Lighter in middle
+            green_gradient.setColorAt(1, QColor(0, 100, 0)) # Darker at right
+            painter.setBrush(green_gradient)
             painter.drawRect(x, green_bar_y, bar_width, green_height)
 
 class OverlayContainer(QWidget):
