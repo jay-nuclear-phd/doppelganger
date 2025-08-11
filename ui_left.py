@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QWidget, QLabel, QVBoxLayout, QGridLayout, QPushButton, QFrame, QSizePolicy
+    QWidget, QLabel, QVBoxLayout, QGridLayout, QPushButton, QFrame, QSizePolicy, QLayout
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QPainter, QColor
@@ -25,12 +25,51 @@ class ControlRodOverlay(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
         width = self.width()
         height = self.height()
-        num_rods = len(self.rod_names)
-        gap = width // num_rods
-        bar_width = int(gap * self.bar_width_ratio)
+        
+        # Define the proportions
+        proportions = [7, 8, 10, 8, 10, 8, 10, 8, 7]
+        total_proportional_units = sum(proportions)
+        
+        unit_width = width / total_proportional_units
+        
+        # Calculate x positions and widths for each rod
+        rod_data = [] # List of (x, bar_width) for each rod
+        current_x = 0
+        
+        # Skip first empty space
+        current_x += proportions[0] * unit_width 
+        
+        # Rod 1
+        rod_width = proportions[1] * unit_width
+        rod_data.append((current_x, rod_width))
+        current_x += rod_width
+        
+        # Skip empty space 2
+        current_x += proportions[2] * unit_width
+        
+        # Rod 2
+        rod_width = proportions[3] * unit_width
+        rod_data.append((current_x, rod_width))
+        current_x += rod_width
+        
+        # Skip empty space 3
+        current_x += proportions[4] * unit_width
+        
+        # Rod 3
+        rod_width = proportions[5] * unit_width
+        rod_data.append((current_x, rod_width))
+        current_x += rod_width
+        
+        # Skip empty space 4
+        current_x += proportions[6] * unit_width
+        
+        # Rod 4
+        rod_width = proportions[7] * unit_width
+        rod_data.append((current_x, rod_width))
+        current_x += rod_width
         
         half_height = height // 2
         
@@ -38,7 +77,9 @@ class ControlRodOverlay(QWidget):
             pos = self.rod_positions[name]
             h = int((1 - pos / self.max_position) * half_height)
 
-            x = gap * i + (gap - bar_width) // 2
+            x, bar_width = rod_data[i]
+            x = int(x)
+            bar_width = int(bar_width)
             y = 0
 
             painter.setBrush(QColor("gray"))
@@ -48,6 +89,27 @@ class ControlRodOverlay(QWidget):
             green_y = y + h
             painter.setBrush(QColor("green"))
             painter.drawRect(x, green_y, bar_width, half_height)
+
+class OverlayContainer(QWidget):
+    def __init__(self, background_widget, overlay_widget, parent=None):
+        super().__init__(parent)
+        self.background_widget = background_widget
+        self.overlay_widget = overlay_widget
+
+        # Set up a layout for the background widget
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.background_widget)
+
+        # Set the overlay widget as a child and raise it
+        self.overlay_widget.setParent(self)
+        self.overlay_widget.raise_()
+
+    def resizeEvent(self, event):
+        # Ensure the overlay widget matches the size of this container
+        self.overlay_widget.setGeometry(self.rect())
+        super().resizeEvent(event)
 
 class LeftPanel(QWidget):
     def __init__(self, sim, parent=None):
@@ -70,8 +132,8 @@ class LeftPanel(QWidget):
         red_frame = QFrame()
         red_frame.setStyleSheet("background-color: red;")
         red_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        background_layout.addWidget(blue_frame, stretch=9)
-        background_layout.addWidget(red_frame, stretch=11)
+        background_layout.addWidget(blue_frame, stretch=11)
+        background_layout.addWidget(red_frame, stretch=9)
         background_layout.setSpacing(0)
 
         self.rod_overlay = ControlRodOverlay(self.sim.rod_names, self.sim.max_position)
@@ -80,19 +142,13 @@ class LeftPanel(QWidget):
         self.rod_overlay.setStyleSheet("background-color: transparent;")
         self.rod_overlay.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        stack_widget = QWidget()
-        stack_layout = QVBoxLayout(stack_widget)
-        stack_layout.setContentsMargins(0, 0, 0, 0)
-        stack_layout.setSpacing(0)
-        stack_layout.addWidget(background)
-        self.rod_overlay.setParent(stack_widget)
-        self.rod_overlay.raise_()
+        stack_container_widget = OverlayContainer(background, self.rod_overlay)
 
         rect_widget = QWidget()
         rect_layout = QVBoxLayout(rect_widget)
         rect_layout.setContentsMargins(0, 0, 0, 0)
         rect_layout.setSpacing(0)
-        rect_layout.addWidget(stack_widget)
+        rect_layout.addWidget(stack_container_widget)
         
         control_grid = QGridLayout()
         rod_names_order = ["Tran", "Shim1", "Shim2", "Reg"] # Explicit order for columns
