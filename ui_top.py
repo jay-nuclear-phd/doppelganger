@@ -314,3 +314,26 @@ class TopPanel(QWidget):
             return float(self.speed_input.text())
         except ValueError:
             return 1.0 # Default value or error handling
+
+    def get_pump_state(self):
+        if self.pump_on_button.isChecked():
+            return "ON"
+        else:
+            return "OFF"
+
+    def get_source_state(self):
+        if self.source_out_button.isChecked():
+            return "OUT"
+        else:
+            return "IN"
+
+    def get_mode_state(self):
+        if self.manual_button.isChecked():
+            return "Manual"
+        elif self.auto_button.isChecked():
+            return "Auto"
+        elif self.pulse_button.isChecked():
+            return "Pulse"
+        elif self.square_button.isChecked():
+            return "Square"
+        return "Manual" # Default or error case

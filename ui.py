@@ -114,7 +114,10 @@ class ReactorSimulatorWindow(QWidget):
         demand_value = self.top_panel.get_demand_value()
         demand_unit = self.top_panel.get_demand_unit()
         speed_value = self.top_panel.get_speed_value()
-        self.right_panel.update_status_table(self.sim, demand_value, demand_unit, speed_value)
+        pump_state = self.top_panel.get_pump_state()
+        source_state = self.top_panel.get_source_state()
+        mode_state = self.top_panel.get_mode_state()
+        self.right_panel.update_status_table(self.sim, demand_value, demand_unit, speed_value, pump_state, source_state, mode_state)
         
         # Update rod labels in LeftPanel
         for name in self.sim.rod_names:
