@@ -149,9 +149,10 @@ class OverlayContainer(QWidget):
         super().resizeEvent(event)
 
 class LeftPanel(QWidget):
-    def __init__(self, sim, parent=None):
+    def __init__(self, sim, mode_button_style, parent=None):
         super().__init__(parent)
         self.sim = sim
+        self.mode_button_style = mode_button_style
 
         self.media_label = QLabel()
         self.media_label.setAlignment(Qt.AlignCenter)
@@ -189,8 +190,8 @@ class LeftPanel(QWidget):
         
         control_grid = QGridLayout()
         rod_names_order = ["Tran", "Shim1", "Shim2", "Reg"] # Explicit order for columns
-        key_map_up = {"Tran": "a", "Shim1": "s", "Shim2": "d", "Reg": "f"}
-        key_map_down = {"Tran": "q", "Shim1": "w", "Shim2": "e", "Reg": "r"}
+        key_map_up = {"Tran": "q", "Shim1": "w", "Shim2": "e", "Reg": "r"}
+        key_map_down = {"Tran": "a", "Shim1": "s", "Shim2": "d", "Reg": "f"}
         air_magnet_texts = ["AIR", "MAGNET", "MAGNET", "MAGNET"]
 
         # Row 0: Headers
@@ -203,8 +204,9 @@ class LeftPanel(QWidget):
         # Row 1: AIR/MAGNET buttons
         for i, text in enumerate(air_magnet_texts):
             btn = QPushButton(text)
-            btn.setStyleSheet("font-size: 14px; font-weight: bold;") # Adjust font size as needed
-            btn.setMinimumSize(120, 50) # Match existing button size
+            btn.setStyleSheet(self.mode_button_style)
+            btn.setCheckable(True) # Make them checkable for consistent styling
+            btn.setMinimumSize(120, 50) # Keep size
             # No connect for now
             control_grid.addWidget(btn, 1, i)
 
@@ -212,8 +214,10 @@ class LeftPanel(QWidget):
         for i, name in enumerate(rod_names_order):
             up_btn = QPushButton(f"▲ ({key_map_up[name]})")
             down_btn = QPushButton(f"▼ ({key_map_down[name]})")
-            up_btn.setStyleSheet("font-size: 16px; font-weight: bold;")
-            down_btn.setStyleSheet("font-size: 16px; font-weight: bold;")
+            up_btn.setStyleSheet(self.mode_button_style)
+            down_btn.setStyleSheet(self.mode_button_style)
+            up_btn.setCheckable(True) # Make them checkable for consistent styling
+            down_btn.setCheckable(True) # Make them checkable for consistent styling
             up_btn.setMinimumSize(120, 50)
             down_btn.setMinimumSize(120, 50)
             up_btn.setAutoRepeat(True)

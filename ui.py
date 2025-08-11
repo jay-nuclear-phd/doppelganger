@@ -45,7 +45,7 @@ class ReactorSimulatorWindow(QWidget):
 
     def init_ui(self):
         # Define common styles here, or pass them to sub-panels
-        default_style = """
+        self.default_style = """
             font-size: 18px;
             font-weight: bold;
             border: none;
@@ -58,7 +58,7 @@ class ReactorSimulatorWindow(QWidget):
             background-color: #b0b0b0;
         }
         """
-        mode_button_style = """
+        self.mode_button_style = """
             font-size: 18px;
             font-weight: bold;
             border: none;
@@ -76,8 +76,8 @@ class ReactorSimulatorWindow(QWidget):
         }
         """
 
-        self.top_panel = TopPanel(self.sim, default_style, mode_button_style)
-        self.left_panel = LeftPanel(self.sim)
+        self.top_panel = TopPanel(self.sim, self.default_style, self.mode_button_style)
+        self.left_panel = LeftPanel(self.sim, self.mode_button_style)
         self.right_panel = RightPanel(self.sim, self.top_panel)
 
         # Connect signals from TopPanel
@@ -127,7 +127,7 @@ class ReactorSimulatorWindow(QWidget):
         self.log_data.append([self.sim.current_time, self.sim.keff, (self.sim.keff - 1) / self.sim.keff * 100 / 0.007, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
 
     def save_data(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save Log File", "keff_log.csv", "CSV Files (*.csv);;All Files (*)")
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Log File", "triga_doppelganger_log.csv", "CSV Files (*.csv);;All Files (*)")
         if file_path:
             with open(file_path, "w", newline="") as f:
                 writer = csv.writer(f)
