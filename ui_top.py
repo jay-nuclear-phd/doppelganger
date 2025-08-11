@@ -299,3 +299,18 @@ class TopPanel(QWidget):
 
     def turn_light_off(self):
         print("Light OFF button clicked!")
+
+    def get_demand_value(self):
+        try:
+            return float(self.demand_input.text())
+        except ValueError:
+            return 0.0 # Return a default or handle error
+
+    def get_demand_unit(self):
+        return self.demand_unit_combo.currentText()
+
+    def get_speed_value(self):
+        try:
+            return float(self.speed_input.text())
+        except ValueError:
+            return 1.0 # Default value or error handling

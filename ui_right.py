@@ -9,9 +9,10 @@ from matplotlib.ticker import LogLocator
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class RightPanel(QWidget):
-    def __init__(self, sim, parent=None):
+    def __init__(self, sim, top_panel, parent=None):
         super().__init__(parent)
         self.sim = sim
+        self.top_panel = top_panel
 
         self.fig, self.axes = plt.subplots(2, 2, figsize=(12, 8))
         self.fig.tight_layout()
@@ -82,9 +83,12 @@ class RightPanel(QWidget):
         status_group = QGroupBox("Simulator Status")
         status_group.setStyleSheet("font-size: 24px; font-weight: bold;")
         status_layout = QVBoxLayout()
-        self.status_table = QTableWidget(9, 2)
+        self.status_table = QTableWidget(9, 4)
         self.status_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.status_table.setStyleSheet("font-size: 14px;")
+        self.status_table.setStyleSheet("font-size: 14px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
+        self.status_table.setShowGrid(False) # Ensure grid is not shown
+        self.status_table.horizontalHeader().setVisible(False) # Hide horizontal header
+        self.status_table.verticalHeader().setVisible(False) # Hide vertical header
         self.status_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.status_table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.status_table.setHorizontalHeaderLabels(["Parameter", "Value"])
@@ -166,8 +170,36 @@ class RightPanel(QWidget):
 
         self.canvas.draw()
 
-    def update_status_table(self, sim_data):
+    def update_status_table(self, sim_data, demand_value, demand_unit, speed_value):
         # Update status table with current simulation data
-        self.status_table.setItem(0, 1, QTableWidgetItem(f"{sim_data.keff:.5f}"))
-        self.status_table.setItem(1, 1, QTableWidgetItem(f"{sim_data.power:.3f} W")) # Example
-        # ... update other rows as needed
+        # Row 0: Demand
+        item_demand_label = QTableWidgetItem("Demand:")
+        item_demand_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status_table.setItem(0, 0, item_demand_label)
+
+        item_demand_value = QTableWidgetItem(f"{int(demand_value)} {demand_unit}")
+        item_demand_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(0, 1, item_demand_value)
+
+        # Row 1: Speed
+        item_speed_label = QTableWidgetItem("Speed:")
+        item_speed_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status_table.setItem(1, 0, item_speed_label)
+
+        item_speed_value = QTableWidgetItem(f"{speed_value:.1f}x")
+        item_speed_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(1, 1, item_speed_value)
+
+        # Fill the rest of the table with placeholder values
+        for row in range(9):
+            for col in range(4):
+                if (row == 0 and (col == 0 or col == 1)) or \
+                   (row == 1 and (col == 0 or col == 1)): # Skip Demand and Speed rows
+                    continue
+                item = QTableWidgetItem(f"Row {row}, Col {col}")
+                item.setTextAlignment(Qt.AlignCenter)
+                self.status_table.setItem(row, col, item)
+
+        # Example of updating other rows (adjust as needed)
+        # self.status_table.setItem(1, 1, QTableWidgetItem(f"{sim_data.keff:.5f}"))
+        # self.status_table.setItem(2, 1, QTableWidgetItem(f"{sim_data.power:.3f} W"))

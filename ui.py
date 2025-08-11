@@ -78,7 +78,7 @@ class ReactorSimulatorWindow(QWidget):
 
         self.top_panel = TopPanel(self.sim, default_style, mode_button_style)
         self.left_panel = LeftPanel(self.sim)
-        self.right_panel = RightPanel(self.sim)
+        self.right_panel = RightPanel(self.sim, self.top_panel)
 
         # Connect signals from TopPanel
         self.top_panel.save_data_signal.connect(self.save_data)
@@ -109,7 +109,12 @@ class ReactorSimulatorWindow(QWidget):
     def update_gui(self):
         self.sim.update_simulation(0.1)
         self.right_panel.update_plots(self.sim)
-        self.right_panel.update_status_table(self.sim)
+        
+        # Get demand value and unit from TopPanel
+        demand_value = self.top_panel.get_demand_value()
+        demand_unit = self.top_panel.get_demand_unit()
+        speed_value = self.top_panel.get_speed_value()
+        self.right_panel.update_status_table(self.sim, demand_value, demand_unit, speed_value)
         
         # Update rod labels in LeftPanel
         for name in self.sim.rod_names:
