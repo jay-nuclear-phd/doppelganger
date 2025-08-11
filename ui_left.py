@@ -95,14 +95,30 @@ class LeftPanel(QWidget):
         rect_layout.addWidget(stack_widget)
         
         control_grid = QGridLayout()
-        self.rod_labels = {}
-        for i, name in enumerate(self.sim.rod_names):
-            label = QLabel(f"0.0")
-            label.setAlignment(Qt.AlignCenter)
-            label.setStyleSheet("font-size: 18px; font-weight: bold;")
-            self.rod_labels[name] = label
-            up_btn = QPushButton(f"▲ {name}")
-            down_btn = QPushButton(f"▼ {name}")
+        rod_names_order = ["Tran", "Shim1", "Shim2", "Reg"] # Explicit order for columns
+        key_map_up = {"Tran": "q", "Shim1": "w", "Shim2": "e", "Reg": "r"}
+        key_map_down = {"Tran": "a", "Shim1": "s", "Shim2": "d", "Reg": "f"}
+        air_magnet_texts = ["AIR", "MAGNET", "MAGNET", "MAGNET"]
+
+        # Row 0: Headers
+        for i, name in enumerate(rod_names_order):
+            header_label = QLabel(name)
+            header_label.setAlignment(Qt.AlignCenter)
+            header_label.setStyleSheet("font-size: 16px; font-weight: bold;") # Adjust font size as needed
+            control_grid.addWidget(header_label, 0, i)
+
+        # Row 1: AIR/MAGNET buttons
+        for i, text in enumerate(air_magnet_texts):
+            btn = QPushButton(text)
+            btn.setStyleSheet("font-size: 14px; font-weight: bold;") # Adjust font size as needed
+            btn.setMinimumSize(120, 50) # Match existing button size
+            # No connect for now
+            control_grid.addWidget(btn, 1, i)
+
+        # Rows 2 & 3: Up/Down buttons
+        for i, name in enumerate(rod_names_order):
+            up_btn = QPushButton(f"▲ ({key_map_up[name]})")
+            down_btn = QPushButton(f"▼ ({key_map_down[name]})")
             up_btn.setStyleSheet("font-size: 16px; font-weight: bold;")
             down_btn.setStyleSheet("font-size: 16px; font-weight: bold;")
             up_btn.setMinimumSize(120, 50)
@@ -115,9 +131,8 @@ class LeftPanel(QWidget):
             down_btn.pressed.connect(partial(self.set_button_state, name+"_down", True))
             up_btn.released.connect(partial(self.set_button_state, name+"_up", False))
             down_btn.released.connect(partial(self.set_button_state, name+"_down", False))
-            control_grid.addWidget(label, 0, i)
-            control_grid.addWidget(up_btn, 1, i)
-            control_grid.addWidget(down_btn, 2, i)
+            control_grid.addWidget(up_btn, 2, i)
+            control_grid.addWidget(down_btn, 3, i)
 
         left_layout = QVBoxLayout()
         left_layout.addWidget(self.media_label, 4)

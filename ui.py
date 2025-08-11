@@ -121,7 +121,6 @@ class ReactorSimulatorWindow(QWidget):
         
         # Update rod labels in LeftPanel
         for name in self.sim.rod_names:
-            self.left_panel.rod_labels[name].setText(f"{int(self.sim.rod_positions[name])}")
             self.left_panel.rod_overlay.set_position(name, self.sim.rod_positions[name])
 
         # CSV logging modification
