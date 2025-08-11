@@ -206,6 +206,7 @@ class LeftPanel(QWidget):
             btn = QPushButton(text)
             btn.setStyleSheet(self.mode_button_style)
             btn.setMinimumSize(120, 50) # Keep size
+            btn.setCheckable(True)
             # No connect for now
             control_grid.addWidget(btn, 1, i)
 
