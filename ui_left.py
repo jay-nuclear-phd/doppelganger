@@ -71,33 +71,48 @@ class ControlRodOverlay(QWidget):
         rod_data.append((current_x, rod_width))
         current_x += rod_width
         
-        half_height = height // 2
+        # Define fixed heights for yellow and green bars
+        yellow_height = int(0.05 * height)
+        green_height = int(0.45 * height)
+        total_green_yellow_height = yellow_height + green_height # 50% of total height
+
+        # Define maximum gray bar height (when rod is fully withdrawn)
+        max_gray_height = int(0.50 * height) # 50% of total height
         
+        # Define minimum gray bar height (when rod is fully inserted)
+        min_gray_height = int(0.05 * height) # 5% of total height
+
         for i, name in enumerate(self.rod_names):
             pos = self.rod_positions[name]
-            h = int((1 - pos / self.max_position) * half_height)
+            
+            # Calculate current gray bar height based on rod position
+            # It should range from max_gray_height down to min_gray_height
+            gray_bar_height = int(min_gray_height + (pos / self.max_position) * (max_gray_height - min_gray_height))
 
             x, bar_width = rod_data[i]
             x = int(x)
             bar_width = int(bar_width)
-            y = 0
+            
+            # Gray bar starts from the very top
+            gray_bar_y = 0
 
             painter.setBrush(QColor("gray"))
             painter.setPen(Qt.NoPen)
-            painter.drawRect(x, y, bar_width, h)
+            painter.drawRect(x, gray_bar_y, bar_width, gray_bar_height)
 
-            green_y = y + h
+            # Yellow bar starts immediately after the gray bar
+            yellow_bar_y = gray_bar_y + gray_bar_height
             
-            yellow_height = int(0.1 * half_height)
-            green_remaining_height = half_height - yellow_height
+            # Green bar starts immediately after the yellow bar
+            green_bar_y = yellow_bar_y + yellow_height
 
             # Draw the yellow part
             painter.setBrush(QColor("yellow"))
-            painter.drawRect(x, green_y, bar_width, yellow_height)
+            painter.drawRect(x, yellow_bar_y, bar_width, yellow_height)
 
-            # Draw the remaining green part
+            # Draw the green part
             painter.setBrush(QColor("green"))
-            painter.drawRect(x, green_y + yellow_height, bar_width, green_remaining_height)
+            painter.drawRect(x, green_bar_y, bar_width, green_height)
 
 class OverlayContainer(QWidget):
     def __init__(self, background_widget, overlay_widget, parent=None):
@@ -161,8 +176,8 @@ class LeftPanel(QWidget):
         
         control_grid = QGridLayout()
         rod_names_order = ["Tran", "Shim1", "Shim2", "Reg"] # Explicit order for columns
-        key_map_up = {"Tran": "q", "Shim1": "w", "Shim2": "e", "Reg": "r"}
-        key_map_down = {"Tran": "a", "Shim1": "s", "Shim2": "d", "Reg": "f"}
+        key_map_up = {"Tran": "a", "Shim1": "s", "Shim2": "d", "Reg": "f"}
+        key_map_down = {"Tran": "q", "Shim1": "w", "Shim2": "e", "Reg": "r"}
         air_magnet_texts = ["AIR", "MAGNET", "MAGNET", "MAGNET"]
 
         # Row 0: Headers
@@ -192,10 +207,10 @@ class LeftPanel(QWidget):
             down_btn.setAutoRepeat(True)
             up_btn.setAutoRepeatInterval(10)
             down_btn.setAutoRepeatInterval(10)
-            up_btn.pressed.connect(partial(self.set_button_state, name+"_up", True))
-            down_btn.pressed.connect(partial(self.set_button_state, name+"_down", True))
-            up_btn.released.connect(partial(self.set_button_state, name+"_up", False))
-            down_btn.released.connect(partial(self.set_button_state, name+"_down", False))
+            up_btn.pressed.connect(partial(self.set_button_state, name+"_down", True))
+            down_btn.pressed.connect(partial(self.set_button_state, name+"_up", True))
+            up_btn.released.connect(partial(self.set_button_state, name+"_down", False))
+            down_btn.released.connect(partial(self.set_button_state, name+"_up", False))
             control_grid.addWidget(up_btn, 2, i)
             control_grid.addWidget(down_btn, 3, i)
 

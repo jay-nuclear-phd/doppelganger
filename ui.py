@@ -98,7 +98,7 @@ class ReactorSimulatorWindow(QWidget):
             rod, direction = self.rod_keymap[event.key()]
             self.sim.pressed_state[rod + direction] = True
             # Update rod overlay in LeftPanel
-            self.left_panel.rod_overlay.set_position(rod, self.sim.rod_positions[rod])
+            self.left_panel.rod_overlay.set_position(rod, 960 - self.sim.rod_positions[rod])
 
 
     def keyReleaseEvent(self, event):
@@ -121,7 +121,7 @@ class ReactorSimulatorWindow(QWidget):
         
         # Update rod labels in LeftPanel
         for name in self.sim.rod_names:
-            self.left_panel.rod_overlay.set_position(name, self.sim.rod_positions[name])
+            self.left_panel.rod_overlay.set_position(name, 960 - self.sim.rod_positions[name])
 
         # CSV logging modification
         self.log_data.append([self.sim.current_time, self.sim.keff, (self.sim.keff - 1) / self.sim.keff * 100 / 0.007, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
