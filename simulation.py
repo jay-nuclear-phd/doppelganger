@@ -31,6 +31,7 @@ class ReactorSimulator:
         self.current_time = 0
         self.rho_interp = self.load_rho_vs_T()
         self.rod_data = {name: [] for name in self.rod_names}
+        self.heat_loss_coefficient = 0.01
 
     def update_simulation(self, dt):
         if not self.running:
@@ -51,6 +52,7 @@ class ReactorSimulator:
             self.scram_active = False
 
         keff = self.calculate_total_keff()
+        self.keff = keff
         self.keff_history.append(keff)
 
         rho = (keff - 1) / keff * 100 / 0.007
@@ -61,6 +63,10 @@ class ReactorSimulator:
             self.power *= 10 ** (-dt / T)
         self.power = max(self.power, 2.5e-4)
         self.power_history.append(self.power)
+        # Temperature update (simple model)
+        # Temperature increases with power, decreases due to heat loss
+        self.temperature += (self.power * 1e-6 * 0.001) - (self.temperature - 20) * self.heat_loss_coefficient * dt # Assuming 1MW = 1 degree C/s, and 20 is ambient
+        self.temperature = max(self.temperature, 20) # Prevent temperature from going below ambient
         self.temp_history.append(self.temperature)
 
         self.time_history.append(self.current_time)
@@ -78,7 +84,7 @@ class ReactorSimulator:
             self.rod_data[name].append(self.rod_positions[name])
 
     def calculate_total_keff(self):
-        keff = 0.96
+        keff = 0.9474639757687583
         for name in self.rod_names:
             x = self.rod_positions[name]
             p = self.rod_params[name]

@@ -164,8 +164,6 @@ class RightPanel(QWidget):
             ax.set_xlim(sim_data.current_time - 10, sim_data.current_time)
         
         for name in self.sim.rod_names:
-            self.rod_data = {name: [] for name in self.sim.rod_names} # This line might be problematic, it reinitializes rod_data
-            self.rod_data[name].append(sim_data.rod_positions[name])
             self.rod_lines[name].set_data(sim_data.time_history, sim_data.rod_data[name])
 
         self.canvas.draw()
