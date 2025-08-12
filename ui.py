@@ -138,7 +138,7 @@ class ReactorSimulatorWindow(QWidget):
             self.left_panel.rod_overlay.set_position(name, 960 - self.sim.rod_positions[name])
 
         # CSV logging modification
-        self.log_data.append([self.sim.current_time, self.sim.keff, self.sim.rod_rho, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
+        self.log_data.append([self.sim.current_time, self.sim.rod_rho, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
 
     def save_data(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Log File", "triga_doppelganger_log.csv", "CSV Files (*.csv);;All Files (*)")

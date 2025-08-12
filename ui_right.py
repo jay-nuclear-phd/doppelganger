@@ -19,18 +19,18 @@ class RightPanel(QWidget):
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.ax_keff = self.axes[0, 0]
+        self.ax_rho = self.axes[0, 0]
         self.ax_power = self.axes[0, 1]
         self.ax_rod = self.axes[1, 0]
         self.ax_temp = self.axes[1, 1]
 
-        self.line_keff, = self.ax_keff.plot([], [], label='keff', color='blue')
-        self.ax_keff.axhline(1.0, color='red', linestyle='--', linewidth=1, alpha=0.5)
-        self.ax_keff.set_ylim(0.95, 1.10)
-        self.ax_keff.set_ylabel('keff')
-        self.ax_keff.set_xlabel('Time (s)')
-        self.ax_keff.grid(True)
-        self.ax_keff.legend()
+        self.line_rho, = self.ax_rho.plot([], [], label='rho', color='blue')
+        self.ax_rho.axhline(1.0, color='red', linestyle='--', linewidth=1, alpha=0.5)
+        self.ax_rho.set_ylim(-800, 800)
+        self.ax_rho.set_ylabel('rho')
+        self.ax_rho.set_xlabel('Time (s)')
+        self.ax_rho.grid(True)
+        self.ax_rho.legend()
         
         self.line_power, = self.ax_power.plot([], [], label='Power', color='orange')
         self.ax_power.set_xlabel('Time (s)')
@@ -128,12 +128,12 @@ class RightPanel(QWidget):
             return f"{power_value / 1e6:.3f} MW"
         
     def update_plots(self, sim_data):
-        self.line_keff.set_data(sim_data.time_history, sim_data.keff_history)
-        if hasattr(self, 'keff_text') and self.keff_text:
-            self.keff_text.remove()
-        self.keff_text = self.ax_keff.annotate(
-            f"{sim_data.keff:.5f}",
-            xy=(sim_data.current_time, sim_data.keff),  
+        self.line_rho.set_data(sim_data.time_history, sim_data.rod_rho_history)
+        if hasattr(self, 'rho_text') and self.rho_text:
+            self.rho_text.remove()
+        self.rho_text = self.ax_rho.annotate(
+            f"{sim_data.rod_rho:.5f}",
+            xy=(sim_data.current_time, sim_data.rod_rho),  
             xytext=(-50, 5),  
             textcoords='offset points',
             fontsize=10,
@@ -160,7 +160,7 @@ class RightPanel(QWidget):
         )
         
         self.line_temp.set_data(sim_data.time_history, sim_data.temp_history)
-        for ax in [self.ax_keff, self.ax_power, self.ax_rod, self.ax_temp]:
+        for ax in [self.ax_rho, self.ax_power, self.ax_rod, self.ax_temp]:
             ax.set_xlim(sim_data.current_time - 10, sim_data.current_time)
         
         for name in self.sim.rod_names:
@@ -255,14 +255,14 @@ class RightPanel(QWidget):
         self.status_table.setItem(3, 2, item_npp_label)
         self.status_table.setItem(3, 3, QTableWidgetItem("-"))
 
-        # Row 4: keff
-        item_keff_label = QTableWidgetItem("keff:")
-        item_keff_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_table.setItem(4, 2, item_keff_label)
+        # Row 4: rho
+        item_rho_label = QTableWidgetItem("rho:")
+        item_rho_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status_table.setItem(4, 2, item_rho_label)
 
-        item_keff_value = QTableWidgetItem(f"{sim_data.keff:.5f}")
-        item_keff_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.status_table.setItem(4, 3, item_keff_value)
+        item_rho_value = QTableWidgetItem(f"{sim_data.rod_rho:.5f}")
+        item_rho_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(4, 3, item_rho_value)
 
         # Row 5: Period
         item_period_label = QTableWidgetItem("Period:")
