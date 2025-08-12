@@ -151,7 +151,7 @@ class ReactorSimulatorWindow(QWidget):
     def reset_simulation(self):
         self.sim.reset_simulation()
         # Reset plots in RightPanel
-        self.right_panel.line_keff.set_data([], [])
+        self.right_panel.line_rho.set_data([], [])
         self.right_panel.line_power.set_data([], [])
         self.right_panel.line_temp.set_data([], [])
         for name in self.sim.rod_names:
