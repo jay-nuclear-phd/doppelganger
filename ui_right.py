@@ -85,7 +85,7 @@ class RightPanel(QWidget):
         status_layout = QVBoxLayout()
         self.status_table = QTableWidget(9, 4)
         self.status_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.status_table.setStyleSheet("font-size: 18px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
+        self.status_table.setStyleSheet("font-size: 15px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
         self.status_table.setShowGrid(False) # Ensure grid is not shown
         self.status_table.horizontalHeader().setVisible(False) # Hide horizontal header
         self.status_table.verticalHeader().setVisible(False) # Hide vertical header
@@ -235,7 +235,7 @@ class RightPanel(QWidget):
         item_power_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(0, 2, item_power_label)
 
-        item_power_value = QTableWidgetItem(f"{sim_data.power:.3f}")
+        item_power_value = QTableWidgetItem(self.format_power_with_unit(sim_data.power))
         item_power_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_table.setItem(0, 3, item_power_value)
 

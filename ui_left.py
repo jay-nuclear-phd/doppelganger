@@ -199,7 +199,7 @@ class LeftPanel(QWidget):
         for i, name in enumerate(rod_names_order):
             header_label = QLabel(name)
             header_label.setAlignment(Qt.AlignCenter)
-            header_label.setStyleSheet("font-size: 16px; font-weight: bold;") # Adjust font size as needed
+            header_label.setStyleSheet("font-size: 20px; font-weight: bold;") # Adjust font size as needed
             control_grid.addWidget(header_label, 0, i)
 
         # Row 1: AIR/MAGNET buttons
