@@ -100,9 +100,14 @@ class ReactorSimulator:
         self.power = n0
         self.C = (self.beta_i / (self.Lambda * self.lam_i)) * n0
 
-    def update_simulation(self, dt):
+    def update_simulation(self, dt, source_state):
         if not self.running:
             return
+
+        if source_state == 'IN':
+            self.S = 2.54e-3
+        else: # OUT
+            self.S = 0.0
 
         self.current_time += dt
 
@@ -130,7 +135,10 @@ class ReactorSimulator:
 
         # Previous state y_k
         y_k = np.empty((7,))
-        y_k[0] = self.power
+        if source_state == 'OUT':
+            y_k[0] = 0.0 # Force power to 0 for calculation if source is out
+        else:
+            y_k[0] = self.power
         y_k[1:] = self.C
 
         # Matrix A for y_k+1 = inv(A) * b

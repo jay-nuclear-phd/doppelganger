@@ -34,7 +34,7 @@ class RightPanel(QWidget):
         
         self.line_power, = self.ax_power.plot([], [], label='Power', color='orange')
         self.ax_power.set_xlabel('Time (s)')
-        self.ax_power.set_ylim(1e-5, 2.5e7)
+        self.ax_power.set_ylim(1e-5, 1e11)
         self.ax_power.set_yscale('log')
         self.ax_power.grid(True, which='both', linestyle='--', linewidth=0.5)
         self.ax_power.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0,), numticks=10))
@@ -132,8 +132,8 @@ class RightPanel(QWidget):
         if hasattr(self, 'rho_text') and self.rho_text:
             self.rho_text.remove()
         self.rho_text = self.ax_rho.annotate(
-            f"{sim_data.rod_rho:.5f}",
-            xy=(sim_data.current_time, sim_data.rod_rho),  
+            f"{sim_data.total_rho:.5f}",
+            xy=(sim_data.current_time, sim_data.total_rho),  
             xytext=(-50, 5),  
             textcoords='offset points',
             fontsize=10,
@@ -143,13 +143,18 @@ class RightPanel(QWidget):
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.7)
         )
         
-        self.line_power.set_data(sim_data.time_history, sim_data.power_history)
+        power_floor = 2.2e-5
+        clipped_power_history = [max(p, power_floor) for p in sim_data.power_history]
+        clipped_current_power = max(sim_data.power, power_floor)
+
+        self.line_power.set_data(sim_data.time_history, clipped_power_history)
         if hasattr(self, 'power_text') and self.power_text:
             self.power_text.remove()
-        formatted_power = self.format_power_with_unit(sim_data.power)
+        
+        formatted_power = self.format_power_with_unit(clipped_current_power)
         self.power_text = self.ax_power.annotate(
             formatted_power,
-            xy=(sim_data.current_time, sim_data.power),
+            xy=(sim_data.current_time, clipped_current_power),
             xytext=(-70, 0),
             textcoords='offset points',
             fontsize=10,
@@ -235,7 +240,7 @@ class RightPanel(QWidget):
         item_power_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(0, 2, item_power_label)
 
-        item_power_value = QTableWidgetItem(self.format_power_with_unit(sim_data.power))
+        item_power_value = QTableWidgetItem(self.format_power_with_unit(max(sim_data.power, 2.2e-5)))
         item_power_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_table.setItem(0, 3, item_power_value)
 

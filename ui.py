@@ -121,7 +121,8 @@ class ReactorSimulatorWindow(QWidget):
                 self.left_panel.control_buttons[key_char].setDown(False)
 
     def update_gui(self):
-        self.sim.update_simulation(0.05)
+        source_state = self.top_panel.get_source_state()
+        self.sim.update_simulation(0.05, source_state)
         self.right_panel.update_plots(self.sim)
         
         # Get demand value and unit from TopPanel

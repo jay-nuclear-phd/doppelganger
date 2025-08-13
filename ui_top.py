@@ -159,20 +159,17 @@ class TopPanel(QWidget):
         self.source_out_button.setMinimumSize(70, 50)
         self.source_in_button.setMinimumSize(70, 50)
         
-        self.source_out_button.clicked.connect(self.select_manual)
         self.source_out_button.setStyleSheet(self.mode_button_style)
-        
-        self.source_in_button.clicked.connect(self.select_auto)
         self.source_in_button.setStyleSheet(self.mode_button_style)
                 
-        self.mode_button_group = QButtonGroup(self) # This QButtonGroup name is reused, consider renaming for clarity if it causes issues
-        self.mode_button_group.setExclusive(True)
+        self.source_button_group = QButtonGroup(self)
+        self.source_button_group.setExclusive(True)
 
         self.source_out_button.setCheckable(True)
         self.source_in_button.setCheckable(True)
 
-        self.mode_button_group.addButton(self.source_out_button)
-        self.mode_button_group.addButton(self.source_in_button)
+        self.source_button_group.addButton(self.source_out_button)
+        self.source_button_group.addButton(self.source_in_button)
         self.source_out_button.setChecked(True)
 
         source_grid = QGridLayout()
