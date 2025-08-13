@@ -88,6 +88,18 @@ class ReactorSimulator:
         Y_hat = A_new @ self.C_temp
         return Y_hat[0] if np.isscalar(x_new) else Y_hat
 
+    def predict_temp_feedback_derivative(self, x_new):
+        xs = np.atleast_1d(x_new).astype(float)
+        zz = (xs - self.x_mu) / self.x_sig
+        # Derivative of Y_hat with respect to x_new
+        # Y_hat = C0 + C1*z + C2*z^2
+        # dY/dx = dY/dz * dz/dx
+        # dz/dx = 1/x_sig
+        # dY/dz = C1 + 2*C2*z
+        dY_dz = self.C_temp[1, :] + 2 * self.C_temp[2, :] * zz.reshape(-1, 1)
+        dY_dx = dY_dz / self.x_sig
+        return dY_dx[0] if np.isscalar(x_new) else dY_dx
+
     def reset_simulation_state(self):
         """Helper to set or reset the simulation state variables."""
         self.rod_rho = self.calculate_rod_rho()
@@ -135,39 +147,58 @@ class ReactorSimulator:
         _, _, self.temp_rho = self.predict_temp_feedback(self.power)
         self.total_rho = self.rod_rho + self.temp_rho
 
-        # Implicit solver for point kinetics
-        r = self.total_rho * 0.01 * self.beta_eff # convert cents to absolute
+        # Semi-implicit solver for point kinetics with linearized temperature feedback
+        _, _, temp_rho_k = self.predict_temp_feedback(self.power)
+        self.temp_rho = temp_rho_k
+        self.total_rho = self.rod_rho + self.temp_rho
 
-        A = np.zeros((7, 7))
-        b = np.zeros(7)
+        # Derivative of reactivity feedback wrt power
+        _, _, d_rho_dP = self.predict_temp_feedback_derivative(self.power)
+        dr_dP = d_rho_dP * 0.01 * self.beta_eff
+
+        # Reactivity at k-th step
+        r_k = self.total_rho * 0.01 * self.beta_eff
+
+        # Constant part of reactivity for k+1 step
+        r_0 = r_k - dr_dP * self.power
 
         # Previous state y_k
         y_k = np.empty((7,))
-        if source_state == 'OUT':
-            y_k[0] = 0.0 # Force power to 0 for calculation if source is out
-        else:
-            y_k[0] = self.power
+        y_k[0] = self.power
         y_k[1:] = self.C
 
-        # Matrix A for y_k+1 = inv(A) * b
-        A[0, 0] = 1.0 - dt * (r - self.beta_eff) / self.Lambda
-        for i in range(6):
-            A[0, 1+i] = -dt * self.lam_i[i]
+        # Coefficients for the quadratic equation a*P^2 + b*P + c = 0 for P_k+1
+        # Derived from substituting precursor equations into the power equation
+        # and linearizing the reactivity feedback term.
+
+        # Constant terms for precursor updates
+        C_i_k = y_k[1:]
+        beta_div_L = self.beta_i / self.Lambda
         
-        for i in range(6):
-            A[1+i, 0]   = -dt * (self.beta_i[i] / self.Lambda)
-            A[1+i, 1+i] = 1.0 + dt * self.lam_i[i]
+        # Summation terms used in coefficients 'b' and 'c'
+        sum_term_b = np.sum(self.lam_i * beta_div_L / (1.0 + dt * self.lam_i))
+        sum_term_c = np.sum(self.lam_i * C_i_k / (1.0 + dt * self.lam_i))
 
-        # Vector b
-        b[0] = y_k[0] + dt * self.S
-        b[1:] = y_k[1:]
+        # Quadratic equation coefficients
+        a = -dt / self.Lambda * dr_dP
+        b = 1.0 - dt/self.Lambda * (r_0 - self.beta_eff) + dt * sum_term_b
+        c = - (y_k[0] + dt * self.S + dt * sum_term_c)
 
-        # Solve for new state y_k+1
-        y_k_plus_1 = np.linalg.solve(A, b)
+        # Solve quadratic equation for the new power P_k+1
+        discriminant = b**2 - 4*a*c
+        if discriminant >= 0:
+            # Choose the positive, physically meaningful root
+            sol1 = (-b + np.sqrt(discriminant)) / (2*a)
+            sol2 = (-b - np.sqrt(discriminant)) / (2*a)
+            new_power = sol1 if sol1 > 0 else sol2
+        else:
+            # Fallback to previous power if roots are complex (should not happen in stable scenarios)
+            new_power = self.power 
 
-        # Update state and apply floors
-        self.power = max(y_k_plus_1[0], 1e-25)
-        self.C = np.maximum(y_k_plus_1[1:], 0.0)
+        self.power = max(new_power, 1e-25)
+
+        # Update precursor concentrations using the new power
+        self.C = (C_i_k + dt * beta_div_L * self.power) / (1.0 + dt * self.lam_i)
 
         # Append current state to history lists
         self.time_history.append(self.current_time)
