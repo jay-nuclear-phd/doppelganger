@@ -53,7 +53,8 @@ class RightPanel(QWidget):
                 va='top'
             )
 
-        self.line_temp, = self.ax_temp.plot([], [], label='Temperature', color='green')
+        self.line_F_Temp1, = self.ax_temp.plot([], [], label='F.Temp1', color='red')
+        self.line_F_Temp2, = self.ax_temp.plot([], [], label='F.Temp2', color='purple')
         self.ax_temp.set_xlabel('Time (s)')
         self.ax_temp.set_ylim(0, 400)
         self.ax_temp.grid(True)
@@ -179,7 +180,9 @@ class RightPanel(QWidget):
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.7)
         )
         
-        self.line_temp.set_data(sim_data.time_history, sim_data.temp_history)
+        self.line_F_Temp1.set_data(sim_data.time_history, sim_data.F_Temp1_history)
+        self.line_F_Temp2.set_data(sim_data.time_history, sim_data.F_Temp2_history)
+
         for ax in [self.ax_rho, self.ax_power, self.ax_rod, self.ax_temp]:
             ax.set_xlim(sim_data.current_time - 10, sim_data.current_time)
         
@@ -294,13 +297,17 @@ class RightPanel(QWidget):
         item_ftemp1_label = QTableWidgetItem("F.Temp1:")
         item_ftemp1_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(6, 2, item_ftemp1_label)
-        self.status_table.setItem(6, 3, QTableWidgetItem("-"))
+        item_ftemp1_value = QTableWidgetItem(f"{sim_data.F_Temp1_history[-1]:.2f}")
+        item_ftemp1_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(6, 3, item_ftemp1_value)
 
         # Row 7: F.Temp2
         item_ftemp2_label = QTableWidgetItem("F.Temp2:")
         item_ftemp2_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(7, 2, item_ftemp2_label)
-        self.status_table.setItem(7, 3, QTableWidgetItem("-"))
+        item_ftemp2_value = QTableWidgetItem(f"{sim_data.F_Temp2_history[-1]:.2f}")
+        item_ftemp2_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(7, 3, item_ftemp2_value)
 
         # Row 8: W.Temp
         item_wtemp_label = QTableWidgetItem("W.Temp:")

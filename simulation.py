@@ -75,6 +75,10 @@ class ReactorSimulator:
         self.time_history = [self.current_time]
         self.rod_data = {name: [self.rod_positions[name]] for name in self.rod_names}
 
+        F_Temp1, F_Temp2, _ = self.predict_temp_feedback(self.power)
+        self.F_Temp1_history = [F_Temp1]
+        self.F_Temp2_history = [F_Temp2]
+
         self.heat_loss_coefficient = 0.01
 
     def predict_temp_feedback(self, x_new):
@@ -172,6 +176,10 @@ class ReactorSimulator:
         self.temperature += (self.power * 1e-6 * 0.001) - (self.temperature - 20) * self.heat_loss_coefficient * dt
         self.temperature = max(self.temperature, 20)
         self.temp_history.append(self.temperature)
+
+        F_Temp1, F_Temp2, _ = self.predict_temp_feedback(self.power)
+        self.F_Temp1_history.append(F_Temp1)
+        self.F_Temp2_history.append(F_Temp2)
         
         if self.current_time > 10:
             while self.time_history and self.time_history[0] < self.current_time - 10:
@@ -179,6 +187,8 @@ class ReactorSimulator:
                 self.total_rho_history.pop(0)
                 self.power_history.pop(0)
                 self.temp_history.pop(0) if self.temp_history else None
+                self.F_Temp1_history.pop(0) if self.F_Temp1_history else None
+                self.F_Temp2_history.pop(0) if self.F_Temp2_history else None
                 for name in self.rod_names:
                     if self.rod_data[name]:
                         self.rod_data[name].pop(0)
@@ -223,9 +233,17 @@ class ReactorSimulator:
         self.time_history.clear()
         self.rod_data = {name: [] for name in self.rod_names}
 
+        self.F_Temp1_history.clear()
+        self.F_Temp2_history.clear()
+
         self.time_history.append(self.current_time)
         self.total_rho_history.append(self.total_rho)
         self.power_history.append(self.power)
         self.temp_history.append(self.temperature)
+
+        F_Temp1, F_Temp2, _ = self.predict_temp_feedback(self.power)
+        self.F_Temp1_history.append(F_Temp1)
+        self.F_Temp2_history.append(F_Temp2)
+
         for name in self.rod_names:
             self.rod_data[name].append(self.rod_positions[name])
