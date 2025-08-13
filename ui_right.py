@@ -19,22 +19,22 @@ class RightPanel(QWidget):
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.ax_keff = self.axes[0, 0]
+        self.ax_rho = self.axes[0, 0]
         self.ax_power = self.axes[0, 1]
         self.ax_rod = self.axes[1, 0]
         self.ax_temp = self.axes[1, 1]
 
-        self.line_keff, = self.ax_keff.plot([], [], label='keff', color='blue')
-        self.ax_keff.axhline(1.0, color='red', linestyle='--', linewidth=1, alpha=0.5)
-        self.ax_keff.set_ylim(0.95, 1.10)
-        self.ax_keff.set_ylabel('keff')
-        self.ax_keff.set_xlabel('Time (s)')
-        self.ax_keff.grid(True)
-        self.ax_keff.legend()
+        self.line_rho, = self.ax_rho.plot([], [], label='rho', color='blue')
+        self.ax_rho.axhline(1.0, color='red', linestyle='--', linewidth=1, alpha=0.5)
+        self.ax_rho.set_ylim(-800, 800)
+        self.ax_rho.set_ylabel('rho')
+        self.ax_rho.set_xlabel('Time (s)')
+        self.ax_rho.grid(True)
+        self.ax_rho.legend()
         
         self.line_power, = self.ax_power.plot([], [], label='Power', color='orange')
         self.ax_power.set_xlabel('Time (s)')
-        self.ax_power.set_ylim(1e-5, 2.5e7)
+        self.ax_power.set_ylim(1e-5, 1e11)
         self.ax_power.set_yscale('log')
         self.ax_power.grid(True, which='both', linestyle='--', linewidth=0.5)
         self.ax_power.yaxis.set_major_locator(LogLocator(base=10.0, subs=(1.0,), numticks=10))
@@ -53,7 +53,8 @@ class RightPanel(QWidget):
                 va='top'
             )
 
-        self.line_temp, = self.ax_temp.plot([], [], label='Temperature', color='green')
+        self.line_F_Temp1, = self.ax_temp.plot([], [], label='F.Temp1', color='red')
+        self.line_F_Temp2, = self.ax_temp.plot([], [], label='F.Temp2', color='purple')
         self.ax_temp.set_xlabel('Time (s)')
         self.ax_temp.set_ylim(0, 400)
         self.ax_temp.grid(True)
@@ -85,7 +86,7 @@ class RightPanel(QWidget):
         status_layout = QVBoxLayout()
         self.status_table = QTableWidget(9, 4)
         self.status_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.status_table.setStyleSheet("font-size: 18px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
+        self.status_table.setStyleSheet("font-size: 15px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;") # Remove all borders and gridlines
         self.status_table.setShowGrid(False) # Ensure grid is not shown
         self.status_table.horizontalHeader().setVisible(False) # Hide horizontal header
         self.status_table.verticalHeader().setVisible(False) # Hide vertical header
@@ -116,24 +117,39 @@ class RightPanel(QWidget):
         self.setLayout(right_column)
 
     def format_power_with_unit(self, power_value):
-        if power_value < 1e-3:
-            return f"{power_value * 1e3:.3f} mW"
+        if power_value < 1e-9:
+            val, unit = power_value * 1e12, "pW"
+        elif power_value < 1e-6:
+            val, unit = power_value * 1e9, "nW"
+        elif power_value < 1e-3:
+            val, unit = power_value * 1e6, "µW"
         elif power_value < 1:
-            return f"{power_value:.3f} W"
+            val, unit = power_value * 1e3, "mW"
         elif power_value < 1e3:
-            return f"{power_value / 1e3:.3f} kW"
+            val, unit = power_value, "W"
         elif power_value < 1e6:
-            return f"{power_value / 1e6:.3f} MW"
+            val, unit = power_value / 1e3, "kW"
+        elif power_value < 1e9:
+            val, unit = power_value / 1e6, "MW"
         else:
-            return f"{power_value / 1e6:.3f} MW"
+            val, unit = power_value / 1e9, "GW"
+
+        if val >= 1000:
+            return f"{val:.0f} {unit}"
+        elif val >= 100:
+            return f"{val:.1f} {unit}"
+        elif val >= 10:
+            return f"{val:.2f} {unit}"
+        else:
+            return f"{val:.3f} {unit}"
         
     def update_plots(self, sim_data):
-        self.line_keff.set_data(sim_data.time_history, sim_data.keff_history)
-        if hasattr(self, 'keff_text') and self.keff_text:
-            self.keff_text.remove()
-        self.keff_text = self.ax_keff.annotate(
-            f"{sim_data.keff:.5f}",
-            xy=(sim_data.current_time, sim_data.keff),  
+        self.line_rho.set_data(sim_data.time_history, sim_data.total_rho_history)
+        if hasattr(self, 'rho_text') and self.rho_text:
+            self.rho_text.remove()
+        self.rho_text = self.ax_rho.annotate(
+            f"{sim_data.total_rho:.5f}",
+            xy=(sim_data.current_time, sim_data.total_rho),  
             xytext=(-50, 5),  
             textcoords='offset points',
             fontsize=10,
@@ -143,13 +159,18 @@ class RightPanel(QWidget):
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.7)
         )
         
-        self.line_power.set_data(sim_data.time_history, sim_data.power_history)
+        power_floor = 2.2e-5
+        clipped_power_history = [max(p, power_floor) for p in sim_data.power_history]
+        clipped_current_power = max(sim_data.power, power_floor)
+
+        self.line_power.set_data(sim_data.time_history, clipped_power_history)
         if hasattr(self, 'power_text') and self.power_text:
             self.power_text.remove()
-        formatted_power = self.format_power_with_unit(sim_data.power)
+        
+        formatted_power = self.format_power_with_unit(clipped_current_power)
         self.power_text = self.ax_power.annotate(
             formatted_power,
-            xy=(sim_data.current_time, sim_data.power),
+            xy=(sim_data.current_time, clipped_current_power),
             xytext=(-70, 0),
             textcoords='offset points',
             fontsize=10,
@@ -159,13 +180,13 @@ class RightPanel(QWidget):
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.7)
         )
         
-        self.line_temp.set_data(sim_data.time_history, sim_data.temp_history)
-        for ax in [self.ax_keff, self.ax_power, self.ax_rod, self.ax_temp]:
+        self.line_F_Temp1.set_data(sim_data.time_history, sim_data.F_Temp1_history)
+        self.line_F_Temp2.set_data(sim_data.time_history, sim_data.F_Temp2_history)
+
+        for ax in [self.ax_rho, self.ax_power, self.ax_rod, self.ax_temp]:
             ax.set_xlim(sim_data.current_time - 10, sim_data.current_time)
         
         for name in self.sim.rod_names:
-            self.rod_data = {name: [] for name in self.sim.rod_names} # This line might be problematic, it reinitializes rod_data
-            self.rod_data[name].append(sim_data.rod_positions[name])
             self.rod_lines[name].set_data(sim_data.time_history, sim_data.rod_data[name])
 
         self.canvas.draw()
@@ -237,7 +258,7 @@ class RightPanel(QWidget):
         item_power_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(0, 2, item_power_label)
 
-        item_power_value = QTableWidgetItem(f"{sim_data.power:.3f}")
+        item_power_value = QTableWidgetItem(self.format_power_with_unit(max(sim_data.power, 2.2e-5)))
         item_power_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_table.setItem(0, 3, item_power_value)
 
@@ -257,14 +278,14 @@ class RightPanel(QWidget):
         self.status_table.setItem(3, 2, item_npp_label)
         self.status_table.setItem(3, 3, QTableWidgetItem("-"))
 
-        # Row 4: keff
-        item_keff_label = QTableWidgetItem("keff:")
-        item_keff_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.status_table.setItem(4, 2, item_keff_label)
+        # Row 4: rho
+        item_rho_label = QTableWidgetItem("rho:")
+        item_rho_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.status_table.setItem(4, 2, item_rho_label)
 
-        item_keff_value = QTableWidgetItem(f"{sim_data.keff:.5f}")
-        item_keff_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.status_table.setItem(4, 3, item_keff_value)
+        item_rho_value = QTableWidgetItem(f"{sim_data.total_rho:.5f}")
+        item_rho_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(4, 3, item_rho_value)
 
         # Row 5: Period
         item_period_label = QTableWidgetItem("Period:")
@@ -276,13 +297,17 @@ class RightPanel(QWidget):
         item_ftemp1_label = QTableWidgetItem("F.Temp1:")
         item_ftemp1_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(6, 2, item_ftemp1_label)
-        self.status_table.setItem(6, 3, QTableWidgetItem("-"))
+        item_ftemp1_value = QTableWidgetItem(f"{sim_data.F_Temp1_history[-1]:.2f}")
+        item_ftemp1_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(6, 3, item_ftemp1_value)
 
         # Row 7: F.Temp2
         item_ftemp2_label = QTableWidgetItem("F.Temp2:")
         item_ftemp2_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(7, 2, item_ftemp2_label)
-        self.status_table.setItem(7, 3, QTableWidgetItem("-"))
+        item_ftemp2_value = QTableWidgetItem(f"{sim_data.F_Temp2_history[-1]:.2f}")
+        item_ftemp2_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.status_table.setItem(7, 3, item_ftemp2_value)
 
         # Row 8: W.Temp
         item_wtemp_label = QTableWidgetItem("W.Temp:")

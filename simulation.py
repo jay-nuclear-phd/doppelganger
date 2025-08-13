@@ -1,9 +1,8 @@
 import numpy as np
-from utils import make_linear_interp_with_extrapolation
 
 class ReactorSimulator:
     def __init__(self):
-        self.rod_speed = 30 * 8  # unit/sec
+        self.rod_speed = 30 * 8   # unit/sec
         self.max_position = 960
         self.min_position = 0
         self.running = False
@@ -15,26 +14,120 @@ class ReactorSimulator:
             "Shim1": {"alpha": 0.5457, "beta": -212.14, "L": 1305.19},
             "Reg":   {"alpha": 0.5121, "beta": -342.84, "L": 1738.45}
         }
+        # Point kinetics parameters
+        self.beta_i = np.array([0.000215, 0.001424, 0.001274, 0.002568, 0.000748, 0.000273])
+        self.lam_i  = np.array([0.0124,   0.0305,   0.111,    0.301,    1.14,     3.01   ])
+        self.beta_eff = 0.007
+        self.Lambda = 42e-6
+        self.S = 2.54e-3 # Source term
+
+        # Temperature feedback parameters
+        temp_data = np.array([
+            [2,    18,    18,     0],
+            [3,    19,    19,     0],
+            [10,   24,    24,    -5.07],
+            [30,   39,    44,   -15.67],
+            [100,  81,    92,   -49.2],
+            [300,  182.5, 206,  -144.07],
+            [500,  250,   277,  -220.28],
+            [700,  302.5, 337,  -281.33],
+            [800,  320,   357,  -313.19],
+            [950,  351,   388,  -345.62],
+        ], dtype=float)
+
+        x = temp_data[:, 0] * 1000.0
+        y1 = temp_data[:, 1]
+        y2 = temp_data[:, 2]
+        y3 = temp_data[:, 3]
+        
+        Y = np.column_stack([y1, y2, y3])
+
+        self.x_mu  = x.mean()
+        self.x_sig = x.std()
+        z = (x - self.x_mu) / self.x_sig
+
+        A = np.column_stack([np.ones_like(z), z, z**2])
+        self.C_temp, *_ = np.linalg.lstsq(A, Y, rcond=None)
 
         self.rod_positions = {name: 0 for name in self.rod_names}
         self.pressed_state = {name+"_up": False for name in self.rod_names}
         self.pressed_state.update({name+"_down": False for name in self.rod_names})
         self.scram_active = False
 
-        self.keff = self.calculate_total_keff()
-        self.power = 2.5e-4
-        self.temperature = 18.0
-        self.keff_history = []
-        self.power_history = []
-        self.temp_history = []
-        self.time_history = []
-        self.current_time = 0
-        self.rho_interp = self.load_rho_vs_T()
-        self.rod_data = {name: [] for name in self.rod_names}
+        # Initial conditions
+        self.rod_rho = self.calculate_rod_rho()
+        self.temp_rho = 0
+        self.total_rho = self.rod_rho + self.temp_rho
+        rho0 = self.total_rho * 0.01 * self.beta_eff # convert to absolute
+        if abs(rho0) > 1e-10:
+            self.power = max(1e-20, -self.S * self.Lambda / rho0)
+        else:
+            self.power = 1e-6
+        self.C = (self.beta_i / (self.Lambda * self.lam_i)) * self.power
 
-    def update_simulation(self, dt):
+        self.temperature = 18.0
+        self.current_time = 0
+
+        # Initialize and append initial state to history lists
+        self.total_rho_history = [self.total_rho]
+        self.power_history = [self.power]
+        self.temp_history = [self.temperature]
+        self.time_history = [self.current_time]
+        self.rod_data = {name: [self.rod_positions[name]] for name in self.rod_names}
+
+        F_Temp1, F_Temp2, _ = self.predict_temp_feedback(self.power)
+        self.F_Temp1_history = [F_Temp1]
+        self.F_Temp2_history = [F_Temp2]
+
+        self.heat_loss_coefficient = 0.01
+
+    def predict_temp_feedback(self, x_new):
+        xs = np.atleast_1d(x_new).astype(float)
+        zz = (xs - self.x_mu) / self.x_sig
+        A_new = np.column_stack([np.ones_like(zz), zz, zz**2])
+        Y_hat = A_new @ self.C_temp
+        return Y_hat[0] if np.isscalar(x_new) else Y_hat
+
+    def predict_temp_feedback_derivative(self, x_new):
+        xs = np.atleast_1d(x_new).astype(float)
+        zz = (xs - self.x_mu) / self.x_sig
+        # Derivative of Y_hat with respect to x_new
+        # Y_hat = C0 + C1*z + C2*z^2
+        # dY/dx = dY/dz * dz/dx
+        # dz/dx = 1/x_sig
+        # dY/dz = C1 + 2*C2*z
+        dY_dz = self.C_temp[1, :] + 2 * self.C_temp[2, :] * zz.reshape(-1, 1)
+        dY_dx = dY_dz / self.x_sig
+        return dY_dx[0] if np.isscalar(x_new) else dY_dx
+
+    def reset_simulation_state(self):
+        """Helper to set or reset the simulation state variables."""
+        self.rod_rho = self.calculate_rod_rho()
+        _, _, self.temp_rho = self.predict_temp_feedback(self.power)
+        self.total_rho = self.rod_rho + self.temp_rho
+        
+        rho0 = self.total_rho * 0.01 * self.beta_eff # convert to absolute
+        
+        if abs(rho0) > 1e-10:
+            n0 = max(1e-20, -self.S * self.Lambda / rho0)
+        else:
+            n0 = 1e-6
+        
+        self.power = n0
+        self.C = (self.beta_i / (self.Lambda * self.lam_i)) * n0
+
+    def update_simulation(self, dt, source_state):
         if not self.running:
+            self.previous_source_state = source_state # Keep track even when paused
             return
+
+        if self.previous_source_state == 'OUT' and source_state == 'IN':
+            self.power = 2.53e-3
+
+        if source_state == 'IN':
+            self.S = 2.54e-3
+        else: # OUT
+            self.S = 0.0
 
         self.current_time += dt
 
@@ -50,68 +143,138 @@ class ReactorSimulator:
         if self.scram_active and all(pos <= self.min_position for pos in self.rod_positions.values()):
             self.scram_active = False
 
-        keff = self.calculate_total_keff()
-        self.keff_history.append(keff)
+        self.rod_rho = self.calculate_rod_rho()
+        _, _, self.temp_rho = self.predict_temp_feedback(self.power)
+        self.total_rho = self.rod_rho + self.temp_rho
 
-        rho = (keff - 1) / keff * 100 / 0.007
-        T = self.rho_interp(abs(rho))
-        if rho > 0:
-            self.power *= 10 ** (dt / T)
+        # Semi-implicit solver for point kinetics with linearized temperature feedback
+        _, _, temp_rho_k = self.predict_temp_feedback(self.power)
+        self.temp_rho = temp_rho_k
+        self.total_rho = self.rod_rho + self.temp_rho
+
+        # Derivative of reactivity feedback wrt power
+        _, _, d_rho_dP = self.predict_temp_feedback_derivative(self.power)
+        dr_dP = d_rho_dP * 0.01 * self.beta_eff
+
+        # Reactivity at k-th step
+        r_k = self.total_rho * 0.01 * self.beta_eff
+
+        # Constant part of reactivity for k+1 step
+        r_0 = r_k - dr_dP * self.power
+
+        # Previous state y_k
+        y_k = np.empty((7,))
+        y_k[0] = self.power
+        y_k[1:] = self.C
+
+        # Coefficients for the quadratic equation a*P^2 + b*P + c = 0 for P_k+1
+        # Derived from substituting precursor equations into the power equation
+        # and linearizing the reactivity feedback term.
+
+        # Constant terms for precursor updates
+        C_i_k = y_k[1:]
+        beta_div_L = self.beta_i / self.Lambda
+        
+        # Summation terms used in coefficients 'b' and 'c'
+        sum_term_b = np.sum(self.lam_i * beta_div_L / (1.0 + dt * self.lam_i))
+        sum_term_c = np.sum(self.lam_i * C_i_k / (1.0 + dt * self.lam_i))
+
+        # Quadratic equation coefficients
+        a = -dt / self.Lambda * dr_dP
+        b = 1.0 - dt/self.Lambda * (r_0 - self.beta_eff) + dt * sum_term_b
+        c = - (y_k[0] + dt * self.S + dt * sum_term_c)
+
+        # Solve quadratic equation for the new power P_k+1
+        discriminant = b**2 - 4*a*c
+        if discriminant >= 0:
+            # Choose the positive, physically meaningful root
+            sol1 = (-b + np.sqrt(discriminant)) / (2*a)
+            sol2 = (-b - np.sqrt(discriminant)) / (2*a)
+            new_power = sol1 if sol1 > 0 else sol2
         else:
-            self.power *= 10 ** (-dt / T)
-        self.power = max(self.power, 2.5e-4)
+            # Fallback to previous power if roots are complex (should not happen in stable scenarios)
+            new_power = self.power 
+
+        self.power = max(new_power, 1e-25)
+
+        # Update precursor concentrations using the new power
+        self.C = (C_i_k + dt * beta_div_L * self.power) / (1.0 + dt * self.lam_i)
+
+        # Append current state to history lists
+        self.time_history.append(self.current_time)
+        self.total_rho_history.append(self.total_rho)
         self.power_history.append(self.power)
+        self.temperature += (self.power * 1e-6 * 0.001) - (self.temperature - 20) * self.heat_loss_coefficient * dt
+        self.temperature = max(self.temperature, 20)
         self.temp_history.append(self.temperature)
 
-        self.time_history.append(self.current_time)
+        F_Temp1, F_Temp2, _ = self.predict_temp_feedback(self.power)
+        self.F_Temp1_history.append(F_Temp1)
+        self.F_Temp2_history.append(F_Temp2)
+        
         if self.current_time > 10:
             while self.time_history and self.time_history[0] < self.current_time - 10:
                 self.time_history.pop(0)
-                self.keff_history.pop(0)
+                self.total_rho_history.pop(0)
                 self.power_history.pop(0)
                 self.temp_history.pop(0) if self.temp_history else None
+                self.F_Temp1_history.pop(0) if self.F_Temp1_history else None
+                self.F_Temp2_history.pop(0) if self.F_Temp2_history else None
                 for name in self.rod_names:
                     if self.rod_data[name]:
                         self.rod_data[name].pop(0)
 
         for name in self.rod_names:
             self.rod_data[name].append(self.rod_positions[name])
+        
+        self.previous_source_state = source_state
 
-    def calculate_total_keff(self):
-        keff = 0.96
+    def calculate_rod_rho(self):
+        # Per user, this returns reactivity in cents
+        rod_rho_worth = -750.5146318748818
         for name in self.rod_names:
             x = self.rod_positions[name]
             p = self.rod_params[name]
             worth = p["alpha"] / 4 / np.pi * (-p["L"] * np.sin(np.pi * 2 * p["beta"] / p["L"]) - p["L"] * np.sin(2 * np.pi * (x - p["beta"]) / p["L"]) + 2 * x * np.pi)
-            keff += worth * 0.01 * 0.007
-        return keff
-
-    def load_rho_vs_T(self):
-        effective_beta = 0.007
-        l = 42e-6
-        T = np.logspace(-5, 10, 5000)
-        f = np.array([0.038, 0.213, 0.188, 0.407, 0.128, 0.026])
-        thalf = np.array([54.5, 21.8, 6.0, 2.23, 0.496, 0.179])
-        lmbd = np.log(2) / thalf
-        rho = []
-        for j in range(len(T)):
-            second_term = 0
-            for i in range(6):
-                second_term += f[i] / (1 + lmbd[i] * T[j])
-            value = 100 / (1 + l / T[j]) * (l / effective_beta / T[j] + second_term)
-            rho.append(value)
-        rho = np.array(rho)
-        return make_linear_interp_with_extrapolation(T, rho)
+            rod_rho_worth += worth
+        return rod_rho_worth
 
     def reset_simulation(self):
         self.running = False
         self.scram_active = False
         self.current_time = 0
-        self.keff = self.calculate_total_keff()
-        self.power = 2.5e-4
-        self.keff_history.clear()
+        self.rod_positions = {name: 0 for name in self.rod_names}
+        
+        # Reset current state variables
+        self.rod_rho = self.calculate_rod_rho()
+        self.temp_rho = 0
+        self.total_rho = self.rod_rho + self.temp_rho
+        rho0 = self.total_rho * 0.01 * self.beta_eff # convert to absolute
+        if abs(rho0) > 1e-10:
+            self.power = max(1e-20, -self.S * self.Lambda / rho0)
+        else:
+            self.power = 1e-6
+        self.C = (self.beta_i / (self.Lambda * self.lam_i)) * self.power
+        self.temperature = 18.0
+
+        # Clear and re-append initial state to history lists
+        self.total_rho_history.clear()
         self.power_history.clear()
         self.temp_history.clear()
         self.time_history.clear()
-        self.rod_positions = {name: 0 for name in self.rod_names}
         self.rod_data = {name: [] for name in self.rod_names}
+
+        self.F_Temp1_history.clear()
+        self.F_Temp2_history.clear()
+
+        self.time_history.append(self.current_time)
+        self.total_rho_history.append(self.total_rho)
+        self.power_history.append(self.power)
+        self.temp_history.append(self.temperature)
+
+        F_Temp1, F_Temp2, _ = self.predict_temp_feedback(self.power)
+        self.F_Temp1_history.append(F_Temp1)
+        self.F_Temp2_history.append(F_Temp2)
+
+        for name in self.rod_names:
+            self.rod_data[name].append(self.rod_positions[name])

@@ -37,7 +37,7 @@ class ReactorSimulatorWindow(QWidget):
 
         # CSV logging modification
         self.log_data = []
-        self.log_data.append(["time", "keff", "rho", "T", "power"] + self.sim.rod_names)
+        self.log_data.append(["time", "rho", "temperature", "power"] + self.sim.rod_names)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_gui)
@@ -121,7 +121,8 @@ class ReactorSimulatorWindow(QWidget):
                 self.left_panel.control_buttons[key_char].setDown(False)
 
     def update_gui(self):
-        self.sim.update_simulation(0.05)
+        source_state = self.top_panel.get_source_state()
+        self.sim.update_simulation(0.05, source_state)
         self.right_panel.update_plots(self.sim)
         
         # Get demand value and unit from TopPanel
@@ -138,7 +139,8 @@ class ReactorSimulatorWindow(QWidget):
             self.left_panel.rod_overlay.set_position(name, 960 - self.sim.rod_positions[name])
 
         # CSV logging modification
-        self.log_data.append([self.sim.current_time, self.sim.keff, (self.sim.keff - 1) / self.sim.keff * 100 / 0.007, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
+        if self.sim.running: # Only log if simulation is running
+            self.log_data.append([self.sim.current_time, self.sim.total_rho, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
 
     def save_data(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Log File", "triga_doppelganger_log.csv", "CSV Files (*.csv);;All Files (*)")
@@ -151,9 +153,14 @@ class ReactorSimulatorWindow(QWidget):
     def reset_simulation(self):
         self.sim.reset_simulation()
         # Reset plots in RightPanel
-        self.right_panel.line_keff.set_data([], [])
+        self.right_panel.line_rho.set_data([], [])
         self.right_panel.line_power.set_data([], [])
-        self.right_panel.line_temp.set_data([], [])
+        self.right_panel.line_F_Temp1.set_data([], [])
+        self.right_panel.line_F_Temp2.set_data([], [])
         for name in self.sim.rod_names:
             self.right_panel.rod_lines[name].set_data([], [])
         self.right_panel.canvas.draw()
+
+        # Clear log data and re-add header
+        self.log_data.clear()
+        self.log_data.append(["time", "rho", "temperature", "power"] + self.sim.rod_names)
