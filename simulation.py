@@ -102,7 +102,11 @@ class ReactorSimulator:
 
     def update_simulation(self, dt, source_state):
         if not self.running:
+            self.previous_source_state = source_state # Keep track even when paused
             return
+
+        if self.previous_source_state == 'OUT' and source_state == 'IN':
+            self.power = 2.53e-3
 
         if source_state == 'IN':
             self.S = 2.54e-3
@@ -181,6 +185,8 @@ class ReactorSimulator:
 
         for name in self.rod_names:
             self.rod_data[name].append(self.rod_positions[name])
+        
+        self.previous_source_state = source_state
 
     def calculate_rod_rho(self):
         # Per user, this returns reactivity in cents

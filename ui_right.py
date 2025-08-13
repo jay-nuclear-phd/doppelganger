@@ -116,16 +116,31 @@ class RightPanel(QWidget):
         self.setLayout(right_column)
 
     def format_power_with_unit(self, power_value):
-        if power_value < 1e-3:
-            return f"{power_value * 1e3:.3f} mW"
+        if power_value < 1e-9:
+            val, unit = power_value * 1e12, "pW"
+        elif power_value < 1e-6:
+            val, unit = power_value * 1e9, "nW"
+        elif power_value < 1e-3:
+            val, unit = power_value * 1e6, "µW"
         elif power_value < 1:
-            return f"{power_value:.3f} W"
+            val, unit = power_value * 1e3, "mW"
         elif power_value < 1e3:
-            return f"{power_value / 1e3:.3f} kW"
+            val, unit = power_value, "W"
         elif power_value < 1e6:
-            return f"{power_value / 1e6:.3f} MW"
+            val, unit = power_value / 1e3, "kW"
+        elif power_value < 1e9:
+            val, unit = power_value / 1e6, "MW"
         else:
-            return f"{power_value / 1e6:.3f} MW"
+            val, unit = power_value / 1e9, "GW"
+
+        if val >= 1000:
+            return f"{val:.0f} {unit}"
+        elif val >= 100:
+            return f"{val:.1f} {unit}"
+        elif val >= 10:
+            return f"{val:.2f} {unit}"
+        else:
+            return f"{val:.3f} {unit}"
         
     def update_plots(self, sim_data):
         self.line_rho.set_data(sim_data.time_history, sim_data.total_rho_history)
