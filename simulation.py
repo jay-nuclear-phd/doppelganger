@@ -2,7 +2,7 @@ import numpy as np
 
 class ReactorSimulator:
     def __init__(self):
-        self.rod_speed = 30 * 8  # unit/sec
+        self.rod_speed = 30 * 8   # unit/sec
         self.max_position = 960
         self.min_position = 0
         self.running = False
@@ -21,6 +21,34 @@ class ReactorSimulator:
         self.Lambda = 42e-6
         self.S = 2.54e-3 # Source term
 
+        # Temperature feedback parameters
+        temp_data = np.array([
+            [2,    18,    18,     0],
+            [3,    19,    19,     0],
+            [10,   24,    24,    -5.07],
+            [30,   39,    44,   -15.67],
+            [100,  81,    92,   -49.2],
+            [300,  182.5, 206,  -144.07],
+            [500,  250,   277,  -220.28],
+            [700,  302.5, 337,  -281.33],
+            [800,  320,   357,  -313.19],
+            [950,  351,   388,  -345.62],
+        ], dtype=float)
+
+        x = temp_data[:, 0] * 1000.0
+        y1 = temp_data[:, 1]
+        y2 = temp_data[:, 2]
+        y3 = temp_data[:, 3]
+        
+        Y = np.column_stack([y1, y2, y3])
+
+        self.x_mu  = x.mean()
+        self.x_sig = x.std()
+        z = (x - self.x_mu) / self.x_sig
+
+        A = np.column_stack([np.ones_like(z), z, z**2])
+        self.C_temp, *_ = np.linalg.lstsq(A, Y, rcond=None)
+
         self.rod_positions = {name: 0 for name in self.rod_names}
         self.pressed_state = {name+"_up": False for name in self.rod_names}
         self.pressed_state.update({name+"_down": False for name in self.rod_names})
@@ -28,7 +56,9 @@ class ReactorSimulator:
 
         # Initial conditions
         self.rod_rho = self.calculate_rod_rho()
-        rho0 = self.rod_rho * 0.01 * self.beta_eff # convert to absolute
+        self.temp_rho = 0
+        self.total_rho = self.rod_rho + self.temp_rho
+        rho0 = self.total_rho * 0.01 * self.beta_eff # convert to absolute
         if abs(rho0) > 1e-10:
             self.power = max(1e-20, -self.S * self.Lambda / rho0)
         else:
@@ -39,7 +69,7 @@ class ReactorSimulator:
         self.current_time = 0
 
         # Initialize and append initial state to history lists
-        self.rod_rho_history = [self.rod_rho]
+        self.total_rho_history = [self.total_rho]
         self.power_history = [self.power]
         self.temp_history = [self.temperature]
         self.time_history = [self.current_time]
@@ -47,14 +77,20 @@ class ReactorSimulator:
 
         self.heat_loss_coefficient = 0.01
 
+    def predict_temp_feedback(self, x_new):
+        xs = np.atleast_1d(x_new).astype(float)
+        zz = (xs - self.x_mu) / self.x_sig
+        A_new = np.column_stack([np.ones_like(zz), zz, zz**2])
+        Y_hat = A_new @ self.C_temp
+        return Y_hat[0] if np.isscalar(x_new) else Y_hat
+
     def reset_simulation_state(self):
         """Helper to set or reset the simulation state variables."""
-        # This method is now primarily for setting the current state, not history.
-        # History is handled in __init__ and reset_simulation.
-        rho_cents = self.calculate_rod_rho()
-        self.rod_rho = rho_cents
+        self.rod_rho = self.calculate_rod_rho()
+        _, _, self.temp_rho = self.predict_temp_feedback(self.power)
+        self.total_rho = self.rod_rho + self.temp_rho
         
-        rho0 = rho_cents * 0.01 * self.beta_eff # convert to absolute
+        rho0 = self.total_rho * 0.01 * self.beta_eff # convert to absolute
         
         if abs(rho0) > 1e-10:
             n0 = max(1e-20, -self.S * self.Lambda / rho0)
@@ -83,9 +119,11 @@ class ReactorSimulator:
             self.scram_active = False
 
         self.rod_rho = self.calculate_rod_rho()
+        _, _, self.temp_rho = self.predict_temp_feedback(self.power)
+        self.total_rho = self.rod_rho + self.temp_rho
 
         # Implicit solver for point kinetics
-        r = self.rod_rho * 0.01 * self.beta_eff # convert cents to absolute
+        r = self.total_rho * 0.01 * self.beta_eff # convert cents to absolute
 
         A = np.zeros((7, 7))
         b = np.zeros(7)
@@ -117,7 +155,7 @@ class ReactorSimulator:
 
         # Append current state to history lists
         self.time_history.append(self.current_time)
-        self.rod_rho_history.append(self.rod_rho)
+        self.total_rho_history.append(self.total_rho)
         self.power_history.append(self.power)
         self.temperature += (self.power * 1e-6 * 0.001) - (self.temperature - 20) * self.heat_loss_coefficient * dt
         self.temperature = max(self.temperature, 20)
@@ -126,7 +164,7 @@ class ReactorSimulator:
         if self.current_time > 10:
             while self.time_history and self.time_history[0] < self.current_time - 10:
                 self.time_history.pop(0)
-                self.rod_rho_history.pop(0)
+                self.total_rho_history.pop(0)
                 self.power_history.pop(0)
                 self.temp_history.pop(0) if self.temp_history else None
                 for name in self.rod_names:
@@ -154,7 +192,9 @@ class ReactorSimulator:
         
         # Reset current state variables
         self.rod_rho = self.calculate_rod_rho()
-        rho0 = self.rod_rho * 0.01 * self.beta_eff # convert to absolute
+        self.temp_rho = 0
+        self.total_rho = self.rod_rho + self.temp_rho
+        rho0 = self.total_rho * 0.01 * self.beta_eff # convert to absolute
         if abs(rho0) > 1e-10:
             self.power = max(1e-20, -self.S * self.Lambda / rho0)
         else:
@@ -163,14 +203,14 @@ class ReactorSimulator:
         self.temperature = 18.0
 
         # Clear and re-append initial state to history lists
-        self.rod_rho_history.clear()
+        self.total_rho_history.clear()
         self.power_history.clear()
         self.temp_history.clear()
         self.time_history.clear()
         self.rod_data = {name: [] for name in self.rod_names}
 
         self.time_history.append(self.current_time)
-        self.rod_rho_history.append(self.rod_rho)
+        self.total_rho_history.append(self.total_rho)
         self.power_history.append(self.power)
         self.temp_history.append(self.temperature)
         for name in self.rod_names:

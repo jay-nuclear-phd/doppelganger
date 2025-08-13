@@ -139,7 +139,7 @@ class ReactorSimulatorWindow(QWidget):
 
         # CSV logging modification
         if self.sim.running: # Only log if simulation is running
-            self.log_data.append([self.sim.current_time, self.sim.rod_rho, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
+            self.log_data.append([self.sim.current_time, self.sim.total_rho, self.sim.temperature, self.sim.power] + [self.sim.rod_positions[name] for name in self.sim.rod_names])
 
     def save_data(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Log File", "triga_doppelganger_log.csv", "CSV Files (*.csv);;All Files (*)")

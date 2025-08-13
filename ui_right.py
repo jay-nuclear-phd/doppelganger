@@ -128,7 +128,7 @@ class RightPanel(QWidget):
             return f"{power_value / 1e6:.3f} MW"
         
     def update_plots(self, sim_data):
-        self.line_rho.set_data(sim_data.time_history, sim_data.rod_rho_history)
+        self.line_rho.set_data(sim_data.time_history, sim_data.total_rho_history)
         if hasattr(self, 'rho_text') and self.rho_text:
             self.rho_text.remove()
         self.rho_text = self.ax_rho.annotate(
@@ -260,7 +260,7 @@ class RightPanel(QWidget):
         item_rho_label.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.status_table.setItem(4, 2, item_rho_label)
 
-        item_rho_value = QTableWidgetItem(f"{sim_data.rod_rho:.5f}")
+        item_rho_value = QTableWidgetItem(f"{sim_data.total_rho:.5f}")
         item_rho_value.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.status_table.setItem(4, 3, item_rho_value)
 
