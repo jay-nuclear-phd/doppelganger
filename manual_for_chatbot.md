@@ -23,16 +23,16 @@
     
     Note: Testing has proven that maximum Square wave should be limited to 500kW.
     
-    1. Sequences for square wave mode operation use transient rod (TR) positions that create a positive reactivity insertion as the rod moves from 0 to set position associated with the amount of reactivity desired to achieve desired power. At the time of actuation of the fire button, the core will be set at a steady state power less than 1 kW.
+    A. Sequences for square wave mode operation use transient rod (TR) positions that create a positive reactivity insertion as the rod moves from 0 to set position associated with the amount of reactivity desired to achieve desired power. At the time of actuation of the fire button, the core will be set at a steady state power less than 1 kW.
         1. Choose desired amount of reactivity to add from the movement of TR. (Amount added cannot be greater than 1 dollar (< $1.00). ($0.90 has proven during testing to be the best amount to add for square waves greater than 200kW)
         2. From TR rod worth data (CR worth calculator on the left) determine the rod position associated with the desired reactivity addition.
-    2. Obtain steady state power on REG, shim 1 and shim 2, 800 watts is typical (<1kW):
+    B. Obtain steady state power on REG, shim 1 and shim 2, 800 watts is typical (<1kW):
         1. Withdraw REG rod to approximately 50% withdrawn position.
         2. Withdraw each shim rod in steps of 50 units or less.
         3. Monitor period and maintain as close to 20 seconds as possible while not going less than 10 seconds.
         4. Stabilize power by moving shim rods into a banked position while leaving REG rod at approximately 50% withdrawn position. 
         5. Place in auto mode. (optional)
-    3. Initiate Square Wave:
+    C. Initiate Square Wave:
         1. Verify transient rod is at 0% position.
         2. Check rod at low limit, turn air pressure off.
         3. Withdraw transient drive cylinder to position determined above.
@@ -48,14 +48,14 @@
    ii. Subtract the pulse insertion amount from 100% rod worth. (Maximum allowable Pulse is $3.00) 
    iii. Use the final rod worth and determine the initial height of TR rod on the rod worth table. This is the pre-pulse position of the TR for the initial 50 watt critical condition. 
 
-	1. Obtain steady state power, 50W is typical. (< 1kW):
+	A. Obtain steady state power, 50W is typical. (< 1kW):
 	    1. Withdraw Transient rod to the position calculated above.
 	    2. Withdraw REG rod to approximately 50% withdrawn position.
 	    3. Withdraw shim 1 and shim 2 in alternating 50 units or less increments.
 	    4. Monitor period and maintain as close to 20 seconds as possible while not going less than 10 seconds.
 	    5. Adjust REG, shim 1 and shim 2 rods alternately to maintain period.
 	    6. Stabilize power and bank REG, shim 1 and shim 2 rods.
-	2. Initiate Pulse Mode:
+	B. Initiate Pulse Mode:
 	    1. Insert TR to 0% position.
 	    2. Check TR at low limit, turn air pressure off by pressing yellow air light.
 	    3. Withdraw TR drive cylinder to 100% position (960).

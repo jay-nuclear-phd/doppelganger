@@ -176,7 +176,7 @@ class ChatbotPanel(QGroupBox):
         if mode in ["Square wave", "Pulse"]:
             for l in lines:
                 if re.match(r'^\s*[_a-zA-Z0-9]+\.', l):
-                    current_indent = len(l) - len(l.lstrip(' '))
+                    current_indent = len(l) - len(l.lstrip())
                     if min_indent == -1 or current_indent < min_indent:
                         min_indent = current_indent
 
@@ -192,20 +192,20 @@ class ChatbotPanel(QGroupBox):
 
             padding = 0
             if mode in ["Square wave", "Pulse"]:
-                indent_level = len(line) - len(stripped_line)
+                indent_level = len(line) - len(line.lstrip())
                 base_indent = min_indent if min_indent != -1 else 0
                 relative_indent = indent_level - base_indent
                 padding = (relative_indent // 4) * 20
                 if padding < 0: padding = 0
 
-            match = re.match(r'([_a-zA-Z0-9]+\.)\s*(.*)', stripped_line)
+            match = re.match(r'([_a-zA-Z0-9]+\.)\s(.*)', stripped_line)
             if match:
                 number = html.escape(match.group(1))
                 text = html.escape(match.group(2))
-                html_content += f"<tr><td style='width: 40px; padding-left: {padding}px;'>{number}</td><td>{text}</td></tr>"
+                html_content += f"<tr><td style='width: 25px; padding-left: {padding}px;'>{number}</td><td>{text}</td></tr>"
             else:
                 text = html.escape(stripped_line)
-                note_padding = padding + 40
+                note_padding = padding + 25
                 html_content += f"<tr><td></td><td style='padding-left: {note_padding}px;'><i>{text}</i></td></tr>"
 
         html_content += "</table>"
@@ -223,8 +223,20 @@ class ChatbotPanel(QGroupBox):
     def display_current_step(self):
         if 0 <= self.current_step_index < len(self.steps):
             step_text = self.steps[self.current_step_index]
-            html = self.format_description_to_html(step_text, self.current_simulator_mode)
-            self.text_display.setHtml(html)
+            
+            padding = 0
+            # Indent numbered items by 15px, but not lettered items
+            if re.match(r'^\d+\.', step_text):
+                padding = 15
+
+            match = re.match(r'([_a-zA-Z0-9]+\.)\s(.*)', step_text)
+            if match:
+                number = html.escape(match.group(1))
+                text = html.escape(match.group(2))
+                html_content = "<style>td { vertical-align: top; }</style><table>"
+                html_content += f"<tr><td style='width: 25px; padding-left: {padding}px;'>{number}</td><td>{text}</td></tr>"
+                html_content += "</table>"
+                self.text_display.setHtml(html_content)
             
             self.step_label.setText(f"Step {self.current_step_index + 1} of {len(self.steps)}")
             
