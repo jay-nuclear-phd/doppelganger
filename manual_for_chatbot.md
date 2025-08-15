@@ -21,7 +21,7 @@
         
 3. Square Wave Mode:
     
-    _Note: Testing has proven that maximum Square wave should be limited to 500kW._
+    Note: Testing has proven that maximum Square wave should be limited to 500kW.
     
     1. Sequences for square wave mode operation use transient rod (TR) positions that create a positive reactivity insertion as the rod moves from 0 to set position associated with the amount of reactivity desired to achieve desired power. At the time of actuation of the fire button, the core will be set at a steady state power less than 1 kW.
         1. Choose desired amount of reactivity to add from the movement of TR. (Amount added cannot be greater than 1 dollar (< $1.00). ($0.90 has proven during testing to be the best amount to add for square waves greater than 200kW)
