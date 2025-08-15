@@ -8,7 +8,8 @@ import html
 class ChatbotPanel(QGroupBox):
     def __init__(self, parent=None):
         super().__init__("Chatbot", parent)
-        self.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.base_stylesheet = "font-weight: bold;"
+        self.setStyleSheet(f"font-size: 24px; {self.base_stylesheet}")
         
         main_layout = QVBoxLayout()
         
@@ -17,26 +18,26 @@ class ChatbotPanel(QGroupBox):
 
         # Chatbot type dropdown
         self.chatbot_type_label = QLabel("Chatbot type:")
-        self.chatbot_type_label.setStyleSheet("font-size: 20px; font-weight: normal;")
+        self.chatbot_type_label.setStyleSheet("font-size: 16px; font-weight: normal;")
         self.chatbot_type_combo = QComboBox()
-        self.chatbot_type_combo.addItem("--- select type ---")
+        self.chatbot_type_combo.addItem("--- select chatbot type ---")
         self.chatbot_type_combo.addItems(["Full description", "Step by step"])
-        self.chatbot_type_combo.setStyleSheet("font-size: 20px; font-weight: normal;")
+        self.chatbot_type_combo.setStyleSheet("font-size: 16px; font-weight: normal;")
         self.chatbot_type_combo.setFixedHeight(35)
 
         # Simulator mode dropdown
         self.simulator_mode_label = QLabel("Simulator mode:")
-        self.simulator_mode_label.setStyleSheet("font-size: 20px; font-weight: normal;")
+        self.simulator_mode_label.setStyleSheet("font-size: 16px; font-weight: normal;")
         self.simulator_mode_combo = QComboBox()
-        self.simulator_mode_combo.addItem("--- select mode ---")
+        self.simulator_mode_combo.addItem("--- select simulator mode ---")
         self.simulator_mode_combo.addItems(["Manual", "Auto", "Square wave", "Pulse"])
-        self.simulator_mode_combo.setStyleSheet("font-size: 20px; font-weight: normal;")
+        self.simulator_mode_combo.setStyleSheet("font-size: 16px; font-weight: normal;")
         self.simulator_mode_combo.setFixedHeight(35)
 
         # Restart Button
         self.restart_button = QPushButton("Restart")
         restart_button_style = """
-            font-size: 20px;
+            font-size: 16px;
             font-weight: normal;
             border: 1px solid #999; /* Match combobox border */
             border-radius: 5px;
@@ -67,7 +68,7 @@ class ChatbotPanel(QGroupBox):
         # Text display area
         self.text_display = QTextEdit()
         self.text_display.setReadOnly(True)
-        self.text_display.setStyleSheet("font-size: 20px; font-weight: normal;")
+        self.text_display.setStyleSheet("font-size: 16px; font-weight: normal;")
 
         # Step-by-step controls
         self.step_controls_layout = QHBoxLayout()
@@ -80,7 +81,7 @@ class ChatbotPanel(QGroupBox):
         self.next_button.setFixedHeight(35)
         self.next_button.setFixedWidth(100)
         self.step_label = QLabel("")
-        self.step_label.setStyleSheet("font-size: 20px; font-weight: normal;")
+        self.step_label.setStyleSheet("font-size: 16px; font-weight: normal;")
         self.step_label.setAlignment(Qt.AlignCenter)
 
         self.step_controls_layout.addStretch()
@@ -120,6 +121,12 @@ class ChatbotPanel(QGroupBox):
         
         # Show initial welcome message
         self.display_welcome_message()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        title_font_size = int(self.height() / 20)
+        if title_font_size < 10: title_font_size = 10
+        self.setStyleSheet(f"font-size: {title_font_size}px; {self.base_stylesheet}")
 
     def set_step_controls_visible(self, visible):
         self.prev_button.setVisible(visible)
