@@ -16,7 +16,7 @@ from simulation import ReactorSimulator
 # Import the new UI components
 from ui_top import TopPanel
 from ui_left import LeftPanel
-from ui_right import RightPanel
+from ui_plots import RightPanel
 
 class ReactorSimulatorWindow(QWidget):
     def __init__(self):

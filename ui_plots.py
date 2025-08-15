@@ -7,6 +7,7 @@ from matplotlib.ticker import LogLocator
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from ui_status import StatusPanel
+from ui_chatbot import ChatbotPanel
 
 class RightPanel(QWidget):
     def __init__(self, sim, top_panel, parent=None):
@@ -84,14 +85,8 @@ class RightPanel(QWidget):
         self.status_panel = StatusPanel()
         chat_status_layout.addWidget(self.status_panel, 3)
 
-        chatbot_group = QGroupBox("Chatbot")
-        chatbot_group.setStyleSheet("font-size: 24px; font-weight: bold;")
-        chatbot_layout = QVBoxLayout()
-        self.chatbot_content = QLabel("Chatbot content will appear here.")
-        self.chatbot_content.setAlignment(Qt.AlignCenter)
-        chatbot_layout.addWidget(self.chatbot_content)
-        chatbot_group.setLayout(chatbot_layout)
-        chat_status_layout.addWidget(chatbot_group, 7)
+        self.chatbot_panel = ChatbotPanel()
+        chat_status_layout.addWidget(self.chatbot_panel, 7)
 
         right_column.addWidget(chat_status_container, 4)
         right_column.addWidget(canvas_container, 6)
