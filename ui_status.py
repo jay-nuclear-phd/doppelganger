@@ -6,12 +6,15 @@ from PyQt5.QtCore import Qt
 class StatusPanel(QGroupBox):
     def __init__(self, parent=None):
         super().__init__("Simulator Status", parent)
-        self.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.base_stylesheet = "font-weight: bold;"
+        self.setStyleSheet(f"font-size: 24px; {self.base_stylesheet}")
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         status_layout = QVBoxLayout()
         self.status_table = QTableWidget(9, 4)
         self.status_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.status_table.setStyleSheet("font-size: 15px; border: none; QTableWidget::item { border: none; } gridline-color: transparent;")
+        self.table_base_stylesheet = "border: none; QTableWidget::item { border: none; } gridline-color: transparent;"
+        self.status_table.setStyleSheet(f"font-size: 15px; {self.table_base_stylesheet}")
         self.status_table.setShowGrid(False)
         self.status_table.horizontalHeader().setVisible(False)
         self.status_table.verticalHeader().setVisible(False)
@@ -24,6 +27,18 @@ class StatusPanel(QGroupBox):
         
         status_layout.addWidget(self.status_table)
         self.setLayout(status_layout)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Adjust title font size
+        title_font_size = int(self.height() / 20)
+        if title_font_size < 10: title_font_size = 10
+        self.setStyleSheet(f"font-size: {title_font_size}px; {self.base_stylesheet}")
+
+        # Adjust table font size
+        table_font_size = int(self.height() / 25)
+        if table_font_size < 8: table_font_size = 8
+        self.status_table.setStyleSheet(f"font-size: {table_font_size}px; {self.table_base_stylesheet}")
 
     def format_power_with_unit(self, power_value):
         if power_value < 1e-9:

@@ -1,3 +1,4 @@
+import re
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QGridLayout, QPushButton, QFrame, QSizePolicy, QLayout
 )
@@ -30,7 +31,7 @@ class ControlRodOverlay(QWidget):
         height = self.height()
         
         # Define the proportions
-        proportions = [7, 8, 10, 8, 10, 8, 10, 8, 7]
+        proportions = [5, 8, 10, 8, 10, 8, 10, 8, 5]
         total_proportional_units = sum(proportions)
         
         unit_width = width / total_proportional_units
@@ -154,6 +155,7 @@ class LeftPanel(QWidget):
         self.sim = sim
         self.mode_button_style = mode_button_style
         self.control_buttons = {} # To store references to control buttons
+        self.header_labels = []
 
         self.media_label = QLabel()
         self.media_label.setAlignment(Qt.AlignCenter)
@@ -201,6 +203,7 @@ class LeftPanel(QWidget):
             header_label.setAlignment(Qt.AlignCenter)
             header_label.setStyleSheet("font-size: 20px; font-weight: bold;") # Adjust font size as needed
             control_grid.addWidget(header_label, 0, i)
+            self.header_labels.append(header_label)
 
         # Row 1: AIR/MAGNET buttons
         for i, text in enumerate(air_magnet_texts):
@@ -241,3 +244,23 @@ class LeftPanel(QWidget):
 
     def set_button_state(self, name, state):
         self.sim.pressed_state[name] = state
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        
+        font_size = int(self.height() / 60)
+        if font_size < 8: font_size = 8
+
+        # For buttons:
+        # Replace font-size within self.mode_button_style using regex
+        # This assumes font-size is always present and in the format 'font-size: XXpx;'
+        # It also assumes it's within the main QPushButton rule.
+        updated_mode_button_style = re.sub(r"font-size: \d+px;", f"font-size: {font_size}px;", self.mode_button_style)
+        button_style = updated_mode_button_style
+        
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet(button_style)
+
+        label_style = f"font-weight: bold; font-size: {font_size}px;"
+        for label in self.header_labels:
+            label.setStyleSheet(label_style)

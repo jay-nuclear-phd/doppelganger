@@ -5,5 +5,6 @@ from ui import ReactorSimulatorWindow
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     sim = ReactorSimulatorWindow()
+    # sim.showMaximized()
     sim.show()
     sys.exit(app.exec_())

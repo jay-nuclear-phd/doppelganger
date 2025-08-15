@@ -74,11 +74,13 @@ class RightPanel(QWidget):
         right_column = QVBoxLayout()
         
         canvas_container = QWidget()
+        canvas_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         canvas_layout = QVBoxLayout(canvas_container)
         canvas_layout.setContentsMargins(0, 0, 0, 0)
         canvas_layout.addWidget(self.canvas)
         
         chat_status_container = QWidget()
+        chat_status_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         chat_status_layout = QHBoxLayout(chat_status_container)
         chat_status_layout.setContentsMargins(0, 0, 0, 0)
 
