@@ -1,3 +1,4 @@
+import re
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QGridLayout, QPushButton, QFrame, QSizePolicy, QLayout
 )
@@ -30,7 +31,7 @@ class ControlRodOverlay(QWidget):
         height = self.height()
         
         # Define the proportions
-        proportions = [7, 8, 10, 8, 10, 8, 10, 8, 7]
+        proportions = [5, 8, 10, 8, 10, 8, 10, 8, 5]
         total_proportional_units = sum(proportions)
         
         unit_width = width / total_proportional_units
@@ -247,10 +248,16 @@ class LeftPanel(QWidget):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         
-        font_size = int(self.height() / 50)
+        font_size = int(self.height() / 60)
         if font_size < 8: font_size = 8
 
-        button_style = f"{self.mode_button_style}; font-size: {font_size}px;"
+        # For buttons:
+        # Replace font-size within self.mode_button_style using regex
+        # This assumes font-size is always present and in the format 'font-size: XXpx;'
+        # It also assumes it's within the main QPushButton rule.
+        updated_mode_button_style = re.sub(r"font-size: \d+px;", f"font-size: {font_size}px;", self.mode_button_style)
+        button_style = updated_mode_button_style
+        
         for button in self.findChildren(QPushButton):
             button.setStyleSheet(button_style)
 
