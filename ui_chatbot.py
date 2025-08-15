@@ -17,26 +17,26 @@ class ChatbotPanel(QGroupBox):
 
         # Chatbot type dropdown
         self.chatbot_type_label = QLabel("Chatbot type:")
-        self.chatbot_type_label.setStyleSheet("font-size: 16px; font-weight: normal;")
+        self.chatbot_type_label.setStyleSheet("font-size: 20px; font-weight: normal;")
         self.chatbot_type_combo = QComboBox()
-        self.chatbot_type_combo.addItem("--- select chatbot type ---")
+        self.chatbot_type_combo.addItem("--- select type ---")
         self.chatbot_type_combo.addItems(["Full description", "Step by step"])
-        self.chatbot_type_combo.setStyleSheet("font-size: 16px; font-weight: normal;")
+        self.chatbot_type_combo.setStyleSheet("font-size: 20px; font-weight: normal;")
         self.chatbot_type_combo.setFixedHeight(35)
 
         # Simulator mode dropdown
         self.simulator_mode_label = QLabel("Simulator mode:")
-        self.simulator_mode_label.setStyleSheet("font-size: 16px; font-weight: normal;")
+        self.simulator_mode_label.setStyleSheet("font-size: 20px; font-weight: normal;")
         self.simulator_mode_combo = QComboBox()
-        self.simulator_mode_combo.addItem("--- select simulator mode ---")
+        self.simulator_mode_combo.addItem("--- select mode ---")
         self.simulator_mode_combo.addItems(["Manual", "Auto", "Square wave", "Pulse"])
-        self.simulator_mode_combo.setStyleSheet("font-size: 16px; font-weight: normal;")
+        self.simulator_mode_combo.setStyleSheet("font-size: 20px; font-weight: normal;")
         self.simulator_mode_combo.setFixedHeight(35)
 
         # Restart Button
         self.restart_button = QPushButton("Restart")
         restart_button_style = """
-            font-size: 16px;
+            font-size: 20px;
             font-weight: normal;
             border: 1px solid #999; /* Match combobox border */
             border-radius: 5px;
@@ -67,14 +67,20 @@ class ChatbotPanel(QGroupBox):
         # Text display area
         self.text_display = QTextEdit()
         self.text_display.setReadOnly(True)
-        self.text_display.setStyleSheet("font-size: 16px; font-weight: normal;")
+        self.text_display.setStyleSheet("font-size: 20px; font-weight: normal;")
 
         # Step-by-step controls
         self.step_controls_layout = QHBoxLayout()
         self.prev_button = QPushButton("Previous")
         self.next_button = QPushButton("Next")
+        self.prev_button.setStyleSheet(restart_button_style)
+        self.prev_button.setFixedHeight(35)
+        self.prev_button.setFixedWidth(100)
+        self.next_button.setStyleSheet(restart_button_style)
+        self.next_button.setFixedHeight(35)
+        self.next_button.setFixedWidth(100)
         self.step_label = QLabel("")
-        self.step_label.setStyleSheet("font-size: 16px; font-weight: normal;")
+        self.step_label.setStyleSheet("font-size: 20px; font-weight: normal;")
         self.step_label.setAlignment(Qt.AlignCenter)
 
         self.step_controls_layout.addStretch()
@@ -111,6 +117,9 @@ class ChatbotPanel(QGroupBox):
         self.prev_button.clicked.connect(self.prev_step)
         self.next_button.clicked.connect(self.next_step)
         self.restart_button.clicked.connect(self.restart_chatbot)
+        
+        # Show initial welcome message
+        self.display_welcome_message()
 
     def set_step_controls_visible(self, visible):
         self.prev_button.setVisible(visible)
@@ -153,12 +162,15 @@ class ChatbotPanel(QGroupBox):
         self.current_simulator_mode = self.simulator_mode_combo.currentText()
 
         if "---" in self.current_simulator_mode or "---" in chatbot_type:
-            self.text_display.clear()
+            self.display_welcome_message()
             self.set_step_controls_visible(False)
             return
 
         description = self.manual_data.get(self.current_simulator_mode, "Description not found.")
         
+        # Reset alignment to top before displaying content
+        self.text_display.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
         if chatbot_type == "Full description":
             self.set_step_controls_visible(False)
             self.display_full_description(description)
@@ -225,7 +237,6 @@ class ChatbotPanel(QGroupBox):
             step_text = self.steps[self.current_step_index]
             
             padding = 0
-            # Indent numbered items by 15px, but not lettered items
             if re.match(r'^\d+\.', step_text):
                 padding = 15
 
@@ -256,7 +267,20 @@ class ChatbotPanel(QGroupBox):
     def restart_chatbot(self):
         self.chatbot_type_combo.setCurrentIndex(0)
         self.simulator_mode_combo.setCurrentIndex(0)
-        self.text_display.clear()
+        self.display_welcome_message()
         self.set_step_controls_visible(False)
         self.steps = []
         self.current_step_index = 0
+        
+    def display_welcome_message(self):
+        self.text_display.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        welcome_text = """
+        This Chatbot provides brief instructions for each mode.
+        <br><br>
+        If you want to see the full description at once, select <b>Full description</b>.
+        <br>
+        If you want a step-by-step guide, select <b>Step by step</b>.
+        <br><br>
+        Please make a selection from the dropdown menus above.
+        """
+        self.text_display.setHtml(f"<div style='font-size: 20px;'>{welcome_text}</div>")
