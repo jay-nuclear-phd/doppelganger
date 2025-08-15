@@ -97,9 +97,10 @@ class ChatbotPanel(QGroupBox):
         # Load and parse manual
         self.load_manual()
 
-        # State variables for step-by-step
+        # State variables
         self.steps = []
         self.current_step_index = 0
+        self.current_simulator_mode = ""
 
         # Hide step controls initially
         self.set_step_controls_visible(False)
@@ -149,14 +150,14 @@ class ChatbotPanel(QGroupBox):
 
     def update_display(self):
         chatbot_type = self.chatbot_type_combo.currentText()
-        simulator_mode = self.simulator_mode_combo.currentText()
+        self.current_simulator_mode = self.simulator_mode_combo.currentText()
 
-        if "---" in simulator_mode or "---" in chatbot_type:
+        if "---" in self.current_simulator_mode or "---" in chatbot_type:
             self.text_display.clear()
             self.set_step_controls_visible(False)
             return
 
-        description = self.manual_data.get(simulator_mode, "Description not found.")
+        description = self.manual_data.get(self.current_simulator_mode, "Description not found.")
         
         if chatbot_type == "Full description":
             self.set_step_controls_visible(False)
@@ -167,17 +168,35 @@ class ChatbotPanel(QGroupBox):
             self.set_step_controls_visible(True)
             self.display_current_step()
 
-    def format_description_to_html(self, description):
+    def format_description_to_html(self, description, mode):
         html_content = "<style>td { vertical-align: top; padding-right: 10px; } table { width: 100%; }</style><table>"
         lines = description.split('\n')
-        
+
+        min_indent = -1
+        if mode in ["Square wave", "Pulse"]:
+            for l in lines:
+                if re.match(r'^\s*[_a-zA-Z0-9]+\.', l):
+                    current_indent = len(l) - len(l.lstrip(' '))
+                    if min_indent == -1 or current_indent < min_indent:
+                        min_indent = current_indent
+
         for line in lines:
-            indent_level = (len(line) - len(line.lstrip(' '))) // 4
             stripped_line = line.lstrip()
             if not stripped_line:
                 continue
 
-            padding = indent_level * 20
+            if stripped_line.lower().startswith("note:") or stripped_line.lower().startswith("_note:"):
+                note_text = stripped_line.replace('_', '')
+                html_content += f"<tr><td></td><td><b>{html.escape(note_text)}</b><br/></td></tr>"
+                continue
+
+            padding = 0
+            if mode in ["Square wave", "Pulse"]:
+                indent_level = len(line) - len(stripped_line)
+                base_indent = min_indent if min_indent != -1 else 0
+                relative_indent = indent_level - base_indent
+                padding = (relative_indent // 4) * 20
+                if padding < 0: padding = 0
 
             match = re.match(r'([_a-zA-Z0-9]+\.)\s*(.*)', stripped_line)
             if match:
@@ -193,7 +212,7 @@ class ChatbotPanel(QGroupBox):
         return html_content
 
     def display_full_description(self, description):
-        html = self.format_description_to_html(description)
+        html = self.format_description_to_html(description, self.current_simulator_mode)
         self.text_display.setHtml(html)
 
     def extract_steps(self, description):
@@ -204,7 +223,7 @@ class ChatbotPanel(QGroupBox):
     def display_current_step(self):
         if 0 <= self.current_step_index < len(self.steps):
             step_text = self.steps[self.current_step_index]
-            html = self.format_description_to_html(step_text)
+            html = self.format_description_to_html(step_text, self.current_simulator_mode)
             self.text_display.setHtml(html)
             
             self.step_label.setText(f"Step {self.current_step_index + 1} of {len(self.steps)}")
