@@ -154,6 +154,7 @@ class LeftPanel(QWidget):
         self.sim = sim
         self.mode_button_style = mode_button_style
         self.control_buttons = {} # To store references to control buttons
+        self.header_labels = []
 
         self.media_label = QLabel()
         self.media_label.setAlignment(Qt.AlignCenter)
@@ -201,6 +202,7 @@ class LeftPanel(QWidget):
             header_label.setAlignment(Qt.AlignCenter)
             header_label.setStyleSheet("font-size: 20px; font-weight: bold;") # Adjust font size as needed
             control_grid.addWidget(header_label, 0, i)
+            self.header_labels.append(header_label)
 
         # Row 1: AIR/MAGNET buttons
         for i, text in enumerate(air_magnet_texts):
@@ -241,3 +243,17 @@ class LeftPanel(QWidget):
 
     def set_button_state(self, name, state):
         self.sim.pressed_state[name] = state
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        
+        font_size = int(self.height() / 50)
+        if font_size < 8: font_size = 8
+
+        button_style = f"{self.mode_button_style}; font-size: {font_size}px;"
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet(button_style)
+
+        label_style = f"font-weight: bold; font-size: {font_size}px;"
+        for label in self.header_labels:
+            label.setStyleSheet(label_style)
