@@ -36,7 +36,7 @@ class StatusPanel(QGroupBox):
         self.setStyleSheet(f"font-size: {title_font_size}px; {self.base_stylesheet}")
 
         # Adjust table font size
-        table_font_size = int(self.height() / 30)
+        table_font_size = int(self.height() / 25)
         if table_font_size < 8: table_font_size = 8
         self.status_table.setStyleSheet(f"font-size: {table_font_size}px; {self.table_base_stylesheet}")
 
